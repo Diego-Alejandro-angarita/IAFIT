@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 # Create your views here.
-from django.http import HtmlResponse
+from django.http import JsonResponse
 
 def test_api_connection(request):
     # Datos de prueba preparados para validar la interfaz en inglés o español
@@ -19,4 +19,4 @@ def test_api_connection(request):
             "groups_and_seedbeds"
         ]
     }
-    return HtmlResponse(data)
+    return JsonResponse(data)
