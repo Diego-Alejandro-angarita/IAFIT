@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ event.title }} — IAFIT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6fb; font-family: 'Segoe UI', sans-serif; }
+        .detail-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,48,135,0.10);
+        }
+        .detail-header {
+            background: linear-gradient(135deg, #003087, #0d6efd);
+            border-radius: 16px 16px 0 0;
+            padding: 32px;
+            color: white;
+        }
+        .info-box {
+            background: #f4f6fb;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .info-box i { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark py-3" style="background-color: #003087;">
+    <div class="container">
+        <a href="{% url 'event_list' %}" class="navbar-brand fs-5 mb-0">
+            <i class="bi bi-arrow-left me-2"></i>
+            <span style="color:#7eb3ff; font-weight:800;">IA</span><span style="font-weight:800;">FIT</span>
+            <span class="fw-light ms-2" style="font-size:0.9rem;">| Agenda del Campus</span>
+        </a>
+    </div>
+</nav>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card detail-card">
+                <div class="detail-header">
+                    <h3 class="fw-bold mb-1">{{ event.title }}</h3>
+                    <span class="opacity-75" style="font-size:0.9rem;">
+                        <i class="bi bi-calendar3 me-1"></i>{{ event.event_date }}
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size:0.8rem;">Descripción</h6>
+                    <p class="lead" style="font-size:1rem;">{{ event.description }}</p>
+
+                    <hr class="my-4">
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <i class="bi bi-geo-alt-fill text-danger"></i>
+                                <p class="fw-bold mb-1" style="font-size:0.85rem;">Ubicación</p>
+                                <p class="text-muted mb-0" style="font-size:0.9rem;">{{ event.location|default:"Ubicación por confirmar" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <i class="bi bi-calendar3 text-primary"></i>
+                                <p class="fw-bold mb-1" style="font-size:0.85rem;">Fecha</p>
+                                <p class="text-muted mb-0" style="font-size:0.9rem;">{{ event.event_date }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <i class="bi bi-clock-fill text-success"></i>
+                                <p class="fw-bold mb-1" style="font-size:0.85rem;">Hora</p>
+                                <p class="text-muted mb-0" style="font-size:0.9rem;">{{ event.event_time|time:"H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{% url 'event_list' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver a la Agenda
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

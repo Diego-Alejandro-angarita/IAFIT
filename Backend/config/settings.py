@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'LlamaIndex'
+    'LlamaIndex',
+      # Nueva app para el taller #2
 ]
 
 MIDDLEWARE = [
@@ -85,13 +86,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# Database - SQLite (recomendado para el taller)
 DATABASES = {
-'default': dj_database_url.config(
-        default=os.environ.get('SUPABASE_DB_URL'),
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -115,16 +116,18 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
 
+LANGUAGE_CODE = 'es-co' # O 'es' para español general
+TIME_ZONE = 'America/Bogota'
 USE_I18N = True
-
-USE_TZ = True
+USE_L10N = True # Esto es vital para que las fechas se traduzcan correctamente
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+

@@ -1,7 +1,9 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
-    path('query/', views.query_llama_index, name='query_llama_index'),
-    path('indexar/', views.index_document, name='index_document'),
+    path('', RedirectView.as_view(url='/events/'), name='home'),
+    path('events/', views.event_list, name='event_list'),
+    path('events/<int:pk>/', views.event_detail, name='event_detail'),
 ]
