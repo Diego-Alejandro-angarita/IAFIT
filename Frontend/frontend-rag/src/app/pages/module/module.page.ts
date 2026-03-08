@@ -3,12 +3,40 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
 type BackendResponse = {
   status: string;
   message_es: string;
   message_en: string;
   ui_modules: string[];
+};
+
+type Ubicacion = {
+  codigo_bloque: string;
+  piso: number;
+  descripcion_semantica: string;
+  metadatos: Record<string, unknown>;
+  similarity: number;
+};
+
+type EventoCalendario = {
+  id: string;
+  actividad: string;
+  descripcion: string;
+  dirigido_a: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  periodo: string;
+  similitud: number;
+};
+
+type BusquedaResponse = {
+  resultados: Ubicacion[];
+};
+
+type CalendarioResponse = {
+  resultados: EventoCalendario[];
 };
 
 type ModuleContent = {
@@ -64,12 +92,16 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/';
+  private readonly apiUrl = 'http://127.0.0.1:8000/api/llamaindex/buscar/';
+  private readonly calendarApiUrl = 'http://127.0.0.1:8000/api/llamaindex/calendario/buscar/';
 
   protected prompt = '';
+  protected readonly lastQuery = signal('');
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly response = signal<BackendResponse | null>(null);
+  protected readonly resultados = signal<Ubicacion[]>([]);
+  protected readonly eventosCalendario = signal<EventoCalendario[]>([]);
 
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -99,20 +131,40 @@ export class ModulePage {
   }
 
   protected askBackend(): void {
-    if (!this.isChat()) {
+    if (!this.isChat() || !this.prompt.trim()) {
       return;
     }
 
+    const query = this.prompt.trim();
+    this.prompt = '';
+    this.lastQuery.set(query);
     this.loading.set(true);
     this.errorMessage.set('');
+    this.resultados.set([]);
+    this.eventosCalendario.set([]);
 
-    this.http.get<BackendResponse>(this.apiUrl).pipe(takeUntilDestroyed()).subscribe({
-      next: (data) => {
-        this.response.set(data);
+    forkJoin({
+      campus: this.http.get<BusquedaResponse>(this.apiUrl, { params: { q: query } }),
+      calendario: this.http.get<CalendarioResponse>(this.calendarApiUrl, { params: { q: query } })
+    }).subscribe({
+      next: ({ campus, calendario }) => {
+        const campusResults = campus.resultados ?? [];
+        const calendarResults = calendario.resultados ?? [];
+
+        const bestCampus = campusResults.length ? Math.max(...campusResults.map(r => r.similarity)) : 0;
+        const bestCalendar = calendarResults.length ? Math.max(...calendarResults.map(r => r.similitud)) : 0;
+
+        if (bestCalendar >= bestCampus) {
+          this.eventosCalendario.set(calendarResults);
+          this.resultados.set([]);
+        } else {
+          this.resultados.set(campusResults);
+          this.eventosCalendario.set([]);
+        }
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('No se pudo conectar con el backend en http://127.0.0.1:8000/.');
+        this.errorMessage.set('No se pudo conectar con el backend.');
         this.loading.set(false);
       }
     });

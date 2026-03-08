@@ -33,15 +33,59 @@
           </div>
         </div>
 
-        @if (response(); as api) {
+        @if (resultados().length) {
           <div class="msg-row user">
             <div class="msg-bubble user-bubble">
-              <p>{{ prompt || 'Consulta enviada' }}</p>
+              <p>{{ lastQuery() }}</p>
+            </div>
+          </div>
+          @for (r of resultados(); track r.codigo_bloque + '-' + r.piso) {
+            <div class="msg-row bot">
+              <div class="msg-bubble bot-bubble">
+                <p><strong>Bloque {{ r.codigo_bloque }} — Piso {{ r.piso }}</strong></p>
+                <p>{{ r.descripcion_semantica }}</p>
+              </div>
+            </div>
+          }
+        }
+
+        @if (eventosCalendario().length) {
+          @if (!resultados().length) {
+            <div class="msg-row user">
+              <div class="msg-bubble user-bubble">
+                <p>{{ lastQuery() }}</p>
+              </div>
+            </div>
+          }
+          <div class="msg-row bot">
+            <div class="msg-bubble bot-bubble">
+              <p><strong>📅 Calendario Académico</strong></p>
+            </div>
+          </div>
+          @for (ev of eventosCalendario(); track ev.id) {
+            <div class="msg-row bot">
+              <div class="msg-bubble bot-bubble calendar-bubble">
+                <p class="cal-actividad"><strong>{{ ev.actividad }}</strong></p>
+                <p class="cal-desc">{{ ev.descripcion }}</p>
+                <div class="cal-meta">
+                  <span>📆 {{ ev.fecha_inicio }} — {{ ev.fecha_fin }}</span>
+                  <span>👥 {{ ev.dirigido_a }}</span>
+                  <span>📚 Periodo {{ ev.periodo }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        }
+
+        @if (!loading() && !errorMessage() && lastQuery() && !resultados().length && !eventosCalendario().length) {
+          <div class="msg-row user">
+            <div class="msg-bubble user-bubble">
+              <p>{{ lastQuery() }}</p>
             </div>
           </div>
           <div class="msg-row bot">
             <div class="msg-bubble bot-bubble">
-              <p>{{ api.message_es }}</p>
+              <p>No encontré resultados para tu consulta. Intenta reformular tu pregunta.</p>
             </div>
           </div>
         }

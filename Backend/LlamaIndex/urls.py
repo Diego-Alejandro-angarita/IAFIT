@@ -4,4 +4,7 @@ from . import views
 urlpatterns = [
     path('query/', views.query_llama_index, name='query_llama_index'),
     path('indexar/', views.index_document, name='index_document'),
+    path('buscar/', views.buscar_campus, name='buscar_campus'),
+    path('calendario/', views.calendario, name='calendario'),
+    path('calendario/buscar/', views.buscar_calendario, name='buscar_calendario'),
 ]
