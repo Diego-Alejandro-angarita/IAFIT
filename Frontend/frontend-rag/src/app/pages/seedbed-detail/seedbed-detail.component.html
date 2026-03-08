@@ -1,0 +1,63 @@
+<div class="detail-page">
+
+  <div *ngIf="loading" class="detail-card">
+    <p>Loading seedbed information...</p>
+  </div>
+
+  <div *ngIf="!loading && errorMessage" class="detail-card">
+    <a routerLink="/seedbeds" class="back-link">← Back to seedbeds</a>
+    <h2>Error</h2>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div class="detail-card" *ngIf="!loading && seedbed">
+    <div class="detail-header">
+      <a routerLink="/seedbeds" class="back-link">← Back to seedbeds</a>
+    </div>
+
+    <div class="detail-top">
+      <div class="detail-title-area">
+        <div class="detail-logo">IA</div>
+        <div>
+          <h1>{{ seedbed.name }}</h1>
+          <p class="detail-subtitle">
+            Detailed information about this active research seedbed.
+          </p>
+        </div>
+      </div>
+
+      <span class="status-badge">Active</span>
+    </div>
+
+    <div class="info-pills">
+      <span class="info-pill">{{ seedbed.faculty }}</span>
+      <span class="info-pill">Tutor: {{ seedbed.tutor }}</span>
+    </div>
+
+    <div class="content-section">
+      <h3>Description</h3>
+      <p>
+        {{
+          seedbed.description && seedbed.description !== 'Description not available yet.'
+            ? seedbed.description
+            : 'Description not available yet.'
+        }}
+      </p>
+    </div>
+
+    <div class="detail-actions">
+      <a
+        *ngIf="seedbed.source_url"
+        [href]="seedbed.source_url"
+        target="_blank"
+        class="btn-primary-custom"
+      >
+        Visit official EAFIT source
+      </a>
+
+      <a routerLink="/seedbeds" class="btn-secondary-custom">
+        Return to list
+      </a>
+    </div>
+  </div>
+</div>

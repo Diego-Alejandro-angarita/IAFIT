@@ -1,0 +1,110 @@
+<div class="page-container">
+  <header class="hero-section">
+    <div class="hero-logo-wrapper">
+      <div class="hero-logo">IA</div>
+    </div>
+
+    <h1 class="hero-title">IAFIT Research Seedbeds</h1>
+    <p class="hero-subtitle">
+      Explore active research seedbeds and discover extracurricular research opportunities at EAFIT.
+    </p>
+  </header>
+
+  <section class="search-card">
+    <div class="search-grid">
+      <div class="input-group-custom">
+        <label>Search seedbed</label>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          placeholder="Type a name or keyword..."
+          class="search-input"
+        />
+      </div>
+
+      <div class="input-group-custom">
+        <label>Filter by faculty</label>
+        <select [(ngModel)]="selectedFaculty" class="search-select">
+          <option value="">All faculties</option>
+          <option *ngFor="let faculty of faculties" [value]="faculty">
+            {{ faculty }}
+          </option>
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button (click)="onSearch()" class="btn-primary-custom">
+          🔍 Search
+        </button>
+
+        <button (click)="clearFilters()" class="btn-secondary-custom">
+          ✨ Clear
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="results-header" *ngIf="seedbeds.length > 0">
+    <h2>Available seedbeds</h2>
+    <span class="results-count">{{ seedbeds.length }} results</span>
+  </section>
+
+  <section *ngIf="seedbeds.length > 0" class="cards-grid">
+    <article *ngFor="let s of seedbeds" class="seedbed-card">
+      <div class="card-top">
+        <span class="status-badge">Active</span>
+      </div>
+
+      <h3 class="card-title">{{ s.name }}</h3>
+
+      <div class="meta-row">
+          <span class="meta-label">Faculty</span>
+          <span
+          class="faculty-pill"
+          [style.background]="getFacultyColor(s.faculty)"
+        >
+          {{ s.faculty }}
+        </span>
+      </div>
+
+      <div class="meta-row">
+        <span class="meta-label">Tutor</span>
+        <span class="meta-value">{{ s.tutor }}</span>
+      </div>
+
+      <div class="description-box">
+        <p>
+          {{
+            s.description && s.description !== 'Description not available yet.'
+              ? (s.description | slice:0:180) + (s.description.length > 180 ? '...' : '')
+              : 'Description not available yet.'
+          }}
+        </p>
+      </div>
+
+      <div class="card-actions">
+        <a [routerLink]="['/seedbeds', s.id]" class="btn-view-more">
+          Ver más →
+        </a>
+
+        <a
+          *ngIf="s.source_url"
+          [href]="s.source_url"
+          target="_blank"
+          class="btn-ghost"
+        >
+          Official source
+        </a>
+      </div>
+    </article>
+  </section>
+
+  <section *ngIf="seedbeds.length === 0" class="empty-state-card">
+    <div class="empty-icon">🔎</div>
+    <h3>No research seedbeds match your search.</h3>
+    <p>Try another keyword or clear the filters to see all active seedbeds.</p>
+    <button (click)="clearFilters()" class="btn-secondary-custom">
+      Clear filters
+    </button>
+  </section>
+</div>

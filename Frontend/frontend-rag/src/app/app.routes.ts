@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { HomePage } from './pages/home/home.page';
 import { ModulePage } from './pages/module/module.page';
+import { SeedbedsComponent } from './pages/seedbeds/seedbeds.component';
+import { SeedbedDetailComponent } from './pages/seedbed-detail/seedbed-detail.component';
 
 export const routes: Routes = [
 	{
@@ -52,6 +54,15 @@ export const routes: Routes = [
 		component: ModulePage,
 		data: { moduleKey: 'chat' }
 	},
+	{
+		path: 'seedbeds',
+		component: SeedbedsComponent
+	},
+	{
+		path: 'seedbeds/:id',
+		component: SeedbedDetailComponent
+	},
+
 	{
 		path: '**',
 		redirectTo: ''
