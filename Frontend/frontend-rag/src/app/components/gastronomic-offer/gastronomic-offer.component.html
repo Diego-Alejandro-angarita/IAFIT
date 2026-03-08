@@ -1,0 +1,91 @@
+<div class="gastronomic-offer-container">
+  <div class="header">
+    <h1>🍽️ Oferta Gastronómica EAFIT</h1>
+    <p class="subtitle">Descubre los restaurantes y cafeterías del campus</p>
+  </div>
+
+  <!-- Filtros de categorías -->
+  <div class="categories-filter">
+    <div class="filter-label">Filtrar por categoría:</div>
+    <div class="category-badges">
+      <button 
+        class="category-btn" 
+        [class.active]="selectedCategory === null"
+        (click)="filterByCategory(null)">
+        Todos
+      </button>
+      <button 
+        *ngFor="let category of categories" 
+        class="category-btn"
+        [class.active]="selectedCategory === category.name"
+        (click)="filterByCategory(category.name)">
+        {{ category.display_name }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando establecimientos...</p>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="error && !loading" class="alert alert-danger">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Lista de establecimientos -->
+  <div *ngIf="!loading && filteredEstablishments.length > 0" class="establishments-grid">
+    <div *ngFor="let est of filteredEstablishments" class="establishment-card">
+      <!-- Imagen del establecimiento -->
+      <div class="card-image">
+        <img [src]="est.image_url" [alt]="est.name" />
+        
+        <!-- Badge de estado -->
+        <div [ngClass]="'status-badge ' + getStatusClass(est.current_status.status)">
+          <span class="status-icon">{{ getStatusIcon(est.current_status.status) }}</span>
+          <span class="status-text">{{ est.current_status.message }}</span>
+        </div>
+      </div>
+
+      <!-- Contenido de la tarjeta -->
+      <div class="card-content">
+        <h3 class="establishment-name">{{ est.name }}</h3>
+        
+        <p class="establishment-type">
+          <span class="type-badge">{{ est.establishment_type_display }}</span>
+        </p>
+
+        <p class="establishment-location">
+          📍 {{ est.location }}
+        </p>
+
+        <p class="establishment-description">{{ est.description }}</p>
+
+        <!-- Categorías -->
+        <div class="categories-list">
+          <span *ngFor="let cat of est.categories" class="category-tag">
+            {{ cat.display_name }}
+          </span>
+        </div>
+
+        <!-- Información de contacto -->
+        <div class="contact-info">
+          <p *ngIf="est.phone">
+            <strong>📞</strong> {{ est.phone }}
+          </p>
+          <p *ngIf="est.email">
+            <strong>📧</strong> {{ est.email }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de estado vacío -->
+  <div *ngIf="!loading && filteredEstablishments.length === 0" class="empty-state">
+    <p class="empty-message">
+      {{ getEmptyMessage() }}
+    </p>
+  </div>
+</div>

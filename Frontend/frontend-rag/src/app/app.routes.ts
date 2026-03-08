@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomePage } from './pages/home/home.page';
 import { ModulePage } from './pages/module/module.page';
+import { GastronomicOfferComponent } from './components/gastronomic-offer/gastronomic-offer.component';
 
 export const routes: Routes = [
 	{
@@ -19,8 +20,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'restaurants',
-		component: ModulePage,
-		data: { moduleKey: 'restaurants' }
+		component: GastronomicOfferComponent
 	},
 	{
 		path: 'events',

@@ -29,7 +29,14 @@ SECRET_KEY = 'django-insecure-gnk!_b539-)ojl8or6tuo*)-f@bev^buzosr6o9zil2st^$0$f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '*.app.github.dev',  # Codespaces
+    'vigilant-space-meme-5g4p655xq7g9h4qx6-8000.app.github.dev',
+    'vigilant-space-meme-5g4p655xq7g9h4qx6-4200.app.github.dev',
+]
 
 
 # Application definition
@@ -43,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'django_filters',
     'LlamaIndex'
 ]
 
@@ -59,8 +67,16 @@ MIDDLEWARE = [
 
 #configuración de CORS para permitir solicitudes desde el frontend Angular
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200", # Puerto por defecto de Angular
+    "http://localhost:4200",
+    "http://localhost:8000",
+    "http://127.0.0.1:4200",
+    "http://127.0.0.1:8000",
+    "https://vigilant-space-meme-5g4p655xq7g9h4qx6-4200.app.github.dev",
+    "https://vigilant-space-meme-5g4p655xq7g9h4qx6-8000.app.github.dev",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'config.urls'
 
@@ -128,3 +144,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+    ]
+}
+
