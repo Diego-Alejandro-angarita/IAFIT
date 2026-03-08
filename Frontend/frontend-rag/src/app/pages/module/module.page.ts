@@ -11,6 +11,18 @@ type BackendResponse = {
   ui_modules: string[];
 };
 
+type Ubicacion = {
+  codigo_bloque: string;
+  piso: number;
+  descripcion_semantica: string;
+  metadatos: Record<string, unknown>;
+  similarity: number;
+};
+
+type BusquedaResponse = {
+  resultados: Ubicacion[];
+};
+
 type ModuleContent = {
   title: string;
   description: string;
@@ -64,12 +76,14 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/';
+  private readonly apiUrl = 'http://127.0.0.1:8000/api/llamaindex/buscar/';
 
   protected prompt = '';
+  protected readonly lastQuery = signal('');
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly response = signal<BackendResponse | null>(null);
+  protected readonly resultados = signal<Ubicacion[]>([]);
 
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -99,20 +113,26 @@ export class ModulePage {
   }
 
   protected askBackend(): void {
-    if (!this.isChat()) {
+    if (!this.isChat() || !this.prompt.trim()) {
       return;
     }
 
+    const query = this.prompt.trim();
+    this.prompt = '';
+    this.lastQuery.set(query);
     this.loading.set(true);
     this.errorMessage.set('');
+    this.resultados.set([]);
 
-    this.http.get<BackendResponse>(this.apiUrl).pipe(takeUntilDestroyed()).subscribe({
+    this.http.get<BusquedaResponse>(this.apiUrl, {
+      params: { q: query }
+    }).subscribe({
       next: (data) => {
-        this.response.set(data);
+        this.resultados.set(data.resultados ?? []);
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('No se pudo conectar con el backend en http://127.0.0.1:8000/.');
+        this.errorMessage.set('No se pudo conectar con el backend.');
         this.loading.set(false);
       }
     });

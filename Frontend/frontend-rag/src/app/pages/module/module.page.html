@@ -33,17 +33,20 @@
           </div>
         </div>
 
-        @if (response(); as api) {
+        @if (resultados().length) {
           <div class="msg-row user">
             <div class="msg-bubble user-bubble">
-              <p>{{ prompt || 'Consulta enviada' }}</p>
+              <p>{{ lastQuery() }}</p>
             </div>
           </div>
-          <div class="msg-row bot">
-            <div class="msg-bubble bot-bubble">
-              <p>{{ api.message_es }}</p>
+          @for (r of resultados(); track r.codigo_bloque + '-' + r.piso) {
+            <div class="msg-row bot">
+              <div class="msg-bubble bot-bubble">
+                <p><strong>Bloque {{ r.codigo_bloque }} — Piso {{ r.piso }}</strong></p>
+                <p>{{ r.descripcion_semantica }}</p>
+              </div>
             </div>
-          </div>
+          }
         }
 
         @if (loading()) {
