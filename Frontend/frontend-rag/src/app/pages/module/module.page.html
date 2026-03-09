@@ -4,16 +4,35 @@
     <header class="chat-header">
       <div class="chat-header-inner">
         <a routerLink="/" class="back-btn" aria-label="Volver">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m12 19-7-7 7-7" />
+            <path d="M19 12H5" />
           </svg>
         </a>
         <div class="chat-header-info">
           <div class="chat-avatar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
             </svg>
           </div>
           <div>
@@ -33,15 +52,14 @@
           </div>
         </div>
 
-        @if (response(); as api) {
-          <div class="msg-row user">
-            <div class="msg-bubble user-bubble">
-              <p>{{ prompt || 'Consulta enviada' }}</p>
-            </div>
-          </div>
-          <div class="msg-row bot">
-            <div class="msg-bubble bot-bubble">
-              <p>{{ api.message_es }}</p>
+        @for (msg of chatHistory(); track $index) {
+          <div class="msg-row [msg.role]">
+            <div
+              class="msg-bubble"
+              [class.user-bubble]="msg.role === 'user'"
+              [class.bot-bubble]="msg.role === 'bot'"
+            >
+              <p>{{ msg.text }}</p>
             </div>
           </div>
         }
@@ -75,23 +93,116 @@
             (keydown.enter)="askBackend()"
           />
         </div>
-        <button type="button" class="send-btn" [class.active]="prompt.trim()" (click)="askBackend()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
-            <path d="m21.854 2.147-10.94 10.939"/>
+        <button
+          type="button"
+          class="send-btn"
+          [class.active]="prompt.trim()"
+          (click)="askBackend()"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+            />
+            <path d="m21.854 2.147-10.94 10.939" />
           </svg>
         </button>
       </div>
+    </div>
+  } @else if (isDirectory()) {
+    <header class="module-header">
+      <div class="module-header-inner">
+        <a routerLink="/" class="back-btn" aria-label="Volver">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m12 19-7-7 7-7" />
+            <path d="M19 12H5" />
+          </svg>
+        </a>
+        <h1 class="module-title">{{ content().title }}</h1>
+      </div>
+    </header>
+
+    <div class="module-content">
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando lista de profesores...</p>
+        </div>
+      } @else if (errorMessage()) {
+        <div class="error-state">
+          <p>{{ errorMessage() }}</p>
+        </div>
+      } @else {
+        <div class="directory-controls">
+            <div class="search-bar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" placeholder="Buscar por nombre o título..." [(ngModel)]="searchQuery" />
+            </div>
+            
+            <div class="filter-dropdown">
+                <select [(ngModel)]="selectedFilter">
+                    <option value="">Todas las áreas</option>
+                    @for (cat of availableFilters(); track cat) {
+                        <option [value]="cat">{{ cat }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="directory-list">
+          @for (prof of filteredProfessors(); track prof.nombre) {
+            <div class="prof-card">
+              <div class="prof-avatar">{{ prof.nombre.charAt(0) }}</div>
+              <div class="prof-details">
+                <h3>{{ prof.nombre }}</h3>
+                <p>{{ prof.titulos }}</p>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">No se encontraron profesores que coincidan con la búsqueda.</div>
+          }
+        </div>
+      }
     </div>
   } @else {
     <!-- Generic module page -->
     <header class="module-header">
       <div class="module-header-inner">
         <a routerLink="/" class="back-btn" aria-label="Volver">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m12 19-7-7 7-7" />
+            <path d="M19 12H5" />
           </svg>
         </a>
         <h1 class="module-title">{{ content().title }}</h1>

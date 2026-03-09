@@ -1,14 +1,17 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 
 type BackendResponse = {
-  status: string;
-  message_es: string;
-  message_en: string;
-  ui_modules: string[];
+  respuesta?: string;
+  error?: string;
+};
+
+type Professor = {
+  nombre: string;
+  titulos: string;
 };
 
 type ModuleContent = {
@@ -64,12 +67,46 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/';
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/';
 
   protected prompt = '';
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly response = signal<BackendResponse | null>(null);
+  protected readonly chatHistory = signal<{ role: 'user' | 'bot'; text: string }[]>([]);
+  protected readonly professorsList = signal<Professor[]>([]);
+  
+  protected readonly searchQuery = signal('');
+  protected readonly selectedFilter = signal('');
+
+  protected readonly availableFilters = computed(() => {
+    const list = this.professorsList();
+    const categories = new Set<string>();
+    
+    for (const prof of list) {
+        const match = prof.titulos.match(/\(([^)]+)\)$/);
+        if (match && match[1]) {
+            const cats = match[1].split('/').map(c => c.trim());
+            cats.forEach(c => categories.add(c));
+        }
+    }
+    return Array.from(categories).sort();
+  });
+
+  protected readonly filteredProfessors = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    const filter = this.selectedFilter();
+    
+    return this.professorsList().filter(prof => {
+      const matchesText = prof.nombre.toLowerCase().includes(query) || 
+                          prof.titulos.toLowerCase().includes(query);
+      
+      const matchesFilter = filter ? prof.titulos.includes(filter) : true;
+      
+      return matchesText && matchesFilter;
+    });
+  });
 
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -84,35 +121,67 @@ export class ModulePage {
     return key === 'chat';
   });
 
+  protected readonly isDirectory = computed(() => {
+    const key = this.route.snapshot.data['moduleKey'] as string | undefined;
+    return key === 'directory';
+  });
+
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      if (!this.isChat()) {
-        return;
+      if (this.isChat()) {
+        const query = params.get('q')?.trim();
+        if (query) {
+          this.prompt = query;
+          this.askBackend();
+        }
       }
+    });
 
-      const query = params.get('q')?.trim();
-      if (query) {
-        this.prompt = query;
-        this.askBackend();
+    if (this.isDirectory()) {
+      this.fetchDirectory();
+    }
+  }
+
+  protected askBackend(): void {
+    if (!this.isChat() || !this.prompt.trim()) {
+      return;
+    }
+
+    const currentPrompt = this.prompt.trim();
+    this.chatHistory.update((h) => [...h, { role: 'user', text: currentPrompt }]);
+
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.prompt = '';
+
+    const payload = { query: currentPrompt };
+
+    this.http.post<BackendResponse>(`${this.apiUrl}query/`, payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (data) => {
+        if (data.respuesta) {
+          this.chatHistory.update((h) => [...h, { role: 'bot', text: data.respuesta! }]);
+        } else if (data.error) {
+          this.errorMessage.set(data.error);
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.errorMessage.set('No se pudo conectar con el backend o ocurrió un error al procesar la solicitud.');
+        this.loading.set(false);
       }
     });
   }
 
-  protected askBackend(): void {
-    if (!this.isChat()) {
-      return;
-    }
-
+  protected fetchDirectory(): void {
     this.loading.set(true);
     this.errorMessage.set('');
-
-    this.http.get<BackendResponse>(this.apiUrl).pipe(takeUntilDestroyed()).subscribe({
+    this.http.get<Professor[]>(`${this.apiUrl}directorio/`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
-        this.response.set(data);
+        this.professorsList.set(data);
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('No se pudo conectar con el backend en http://127.0.0.1:8000/.');
+        this.errorMessage.set('No se pudo cargar el directorio de profesores.');
         this.loading.set(false);
       }
     });

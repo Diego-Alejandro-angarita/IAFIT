@@ -63,3 +63,45 @@ def indexar_documento(texto: str):
         show_progress=True
     )
     return True
+
+import psycopg2
+
+def obtener_directorio():
+    db_url = os.environ.get("SUPABASE_DB_URL")
+    if not db_url:
+        return []
+        
+    parsed = urlparse(db_url)
+    
+    try:
+        conn = psycopg2.connect(
+            dbname=parsed.path[1:],
+            user=parsed.username,
+            password=parsed.password,
+            host=parsed.hostname,
+            port=parsed.port or 5432
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT text FROM data_eafit_knowledge LIMIT 1000;")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        profesores = []
+        for row in rows:
+            texto = row[0]
+            if "Profesor:" in texto and "Títulos:" in texto:
+                partes = texto.split("Títulos:")
+                nombre = partes[0].replace("Profesor:", "").strip().rstrip(".")
+                titulos = partes[1].strip().rstrip(".")
+                profesores.append({
+                    "nombre": nombre,
+                    "titulos": titulos
+                })
+        
+        # Ordenar alfabéticamente
+        profesores.sort(key=lambda x: x["nombre"])
+        return profesores
+    except Exception as e:
+        print(f"Error extrayendo directorio: {e}")
+        return []

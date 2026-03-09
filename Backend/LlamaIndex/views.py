@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
-from .services import consultar_rag, indexar_documento
+from .services import consultar_rag, indexar_documento, obtener_directorio
 
 @csrf_exempt
 def query_llama_index(request):
@@ -44,3 +44,10 @@ def index_document(request):
             return JsonResponse({'error': str(e)}, status=500)
             
     return JsonResponse({'error': 'Método no permitido. Use POST.'}, status=405)
+
+def get_directory(request):
+    if request.method == 'GET':
+        directorio = obtener_directorio()
+        return JsonResponse(directorio, safe=False, status=200)
+        
+    return JsonResponse({'error': 'Método no permitido. Use GET.'}, status=405)
