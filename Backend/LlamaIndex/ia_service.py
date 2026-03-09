@@ -6,6 +6,56 @@ from sentence_transformers import SentenceTransformer
 _supabase = None
 _model = None
 
+# Mapeo de palabras clave en la pregunta → actividades que deben priorizarse
+_KEYWORD_BOOST = {
+    'inscri': ['Formulario de inscripción pregrado'],
+    'admisi': ['Formulario de inscripción pregrado'],
+    'ingres': ['Formulario de inscripción pregrado'],
+    'matrícula': ['Pago de matrícula estudiantes nuevos'],
+    'matricula': ['Pago de matrícula estudiantes nuevos'],
+    'pagar': ['Pago de matrícula estudiantes nuevos'],
+    'pago': ['Pago de matrícula estudiantes nuevos'],
+    'clase': ['Inicio de clases'],
+    'empiezan las': ['Inicio de clases'],
+    'terminan las': ['Inicio de clases'],
+    'acaban las': ['Inicio de clases'],
+    'examen': ['Evaluaciones finales'],
+    'exámen': ['Evaluaciones finales'],
+    'final': ['Evaluaciones finales'],
+    'parcial': ['Evaluaciones finales'],
+    'evaluaci': ['Evaluaciones finales'],
+    'materia': ['Registro de materias'],
+    'registr': ['Registro de materias'],
+    'asignatura': ['Registro de materias'],
+    'prerrequisito': ['Solicitud levantamiento de requisitos'],
+    'requisito': ['Solicitud levantamiento de requisitos'],
+    'levantamiento': ['Solicitud levantamiento de requisitos'],
+}
+
+_BOOST_VALUE = 0.15
+
+
+def _apply_keyword_boost(pregunta, resultados):
+    """
+    Boost de similitud para eventos cuya actividad coincida con palabras clave
+    detectadas en la pregunta del usuario.
+    """
+    pregunta_lower = pregunta.lower()
+    actividades_boost = set()
+
+    for keyword, actividades in _KEYWORD_BOOST.items():
+        if keyword in pregunta_lower:
+            actividades_boost.update(actividades)
+
+    if not actividades_boost:
+        return resultados
+
+    for r in resultados:
+        if r.get('actividad') in actividades_boost:
+            r['similitud'] = r.get('similitud', 0) + _BOOST_VALUE
+
+    return resultados
+
 def _get_supabase():
     global _supabase
     if _supabase is None:
@@ -56,6 +106,8 @@ def listar_calendario():
 def buscar_evento_semantico(pregunta):
     """
     Búsqueda semántica sobre calendario_academico usando buscar_eventos RPC.
+    Aplica filtrado por umbral de similitud, boost por keywords y selecciona
+    solo los resultados realmente relevantes a la pregunta.
     """
     model = _get_model()
     vector_pregunta = model.encode(pregunta).tolist()
@@ -68,4 +120,22 @@ def buscar_evento_semantico(pregunta):
         }
     ).execute()
 
-    return respuesta.data
+    resultados = respuesta.data or []
+
+    # Filtrar por umbral mínimo de similitud
+    resultados = [r for r in resultados if r.get('similitud', 0) >= 0.25]
+
+    if not resultados:
+        return []
+
+    # Aplicar boost por palabras clave detectadas en la pregunta
+    resultados = _apply_keyword_boost(pregunta, resultados)
+
+    # Ordenar por similitud descendente (post-boost)
+    resultados.sort(key=lambda r: r.get('similitud', 0), reverse=True)
+
+    # Mantener solo resultados cercanos al mejor match (dentro de 0.08 del top)
+    mejor = resultados[0]['similitud']
+    resultados = [r for r in resultados if r['similitud'] >= mejor - 0.08]
+
+    return resultados
