@@ -9,34 +9,33 @@ export class GastronomicService {
   private apiUrl: string;
 
   constructor(private http: HttpClient) {
-    // Determinar la URL base dinámicamente
+    // Usar URL relativa o determinar dinámicamente
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
     
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      // Desarrollo local
-      this.apiUrl = 'http://localhost:8000/api/establishments/';
+      // Desarrollo local - usar 8000
+      this.apiUrl = 'http://127.0.0.1:8000/api';
     } else {
-      // Codespaces u otro ambiente
-      this.apiUrl = `${protocol}//${hostname.replace('-4200.', '-8000.')}:443/api/establishments/`;
-      // Alternativa simplificada
-      const baseUrl = window.location.origin.replace('-4200.', '-8000.');
-      this.apiUrl = `${baseUrl}/api/establishments/`;
+      // Otros ambientes - usar mismo puerto
+      this.apiUrl = `${protocol}//${hostname}:8000/api`;
     }
+    
+    console.log('API URL configurada:', this.apiUrl);
   }
 
   /**
    * Obtiene la lista de todos los establecimientos
    */
   getEstablishments(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl);
+    return this.http.get<any[]>(`${this.apiUrl}/establishments/`);
   }
 
   /**
    * Obtiene establecimientos filtrados por categoría
    */
   getEstablishmentsByCategory(category: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}by_category/`, { 
+    return this.http.get<any[]>(`${this.apiUrl}/establishments/by_category/`, { 
       params: { category } 
     });
   }
@@ -45,20 +44,20 @@ export class GastronomicService {
    * Obtiene establecimientos que están abiertos actualmente
    */
   getOpenEstablishments(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}open_now/`);
+    return this.http.get<any[]>(`${this.apiUrl}/establishments/open_now/`);
   }
 
   /**
    * Obtiene todas las categorías disponibles
    */
   getCategories(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}categories/`);
+    return this.http.get<any[]>(`${this.apiUrl}/categories/`);
   }
 
   /**
    * Obtiene un establecimiento específico por ID
    */
   getEstablishment(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}${id}/`);
+    return this.http.get<any>(`${this.apiUrl}/establishments/${id}/`);
   }
 }

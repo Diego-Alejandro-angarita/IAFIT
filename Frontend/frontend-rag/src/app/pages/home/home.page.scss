@@ -400,3 +400,49 @@ h1, h2, h3, p { margin: 0; }
 @media (min-width: 769px) {
   .action-icon { padding: .75rem; }
 }
+
+/* ---- Daily Menu Section ---- */
+.daily-menu-section {
+  max-width: 80rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.daily-menu-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 4px solid #f59e0b;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,.1);
+}
+
+.daily-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  svg {
+    color: #f59e0b;
+    flex-shrink: 0;
+  }
+}
+
+.daily-menu-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0;
+}
+
+.daily-menu-text {
+  color: #78350f;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+
+  strong {
+    color: #d97706;
+    font-weight: 600;
+  }
+}

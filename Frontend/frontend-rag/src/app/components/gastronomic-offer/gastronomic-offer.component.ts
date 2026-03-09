@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GastronomicService } from '../../services/gastronomic.service';
+import { Location } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-gastronomic-offer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './gastronomic-offer.component.html',
   styleUrls: ['./gastronomic-offer.component.scss']
 })
@@ -18,7 +20,7 @@ export class GastronomicOfferComponent implements OnInit {
   loading = true;
   error: string | null = null;
 
-  constructor(private gastronomicService: GastronomicService) {}
+  constructor(private gastronomicService: GastronomicService, private location: Location) {}
 
   ngOnInit(): void {
     this.loadCategories();
@@ -29,8 +31,10 @@ export class GastronomicOfferComponent implements OnInit {
    * Carga todas las categorías disponibles
    */
   loadCategories(): void {
+    console.log('Cargando categorías...');
     this.gastronomicService.getCategories().subscribe({
       next: (categories: any) => {
+        console.log('Categorías cargadas:', categories);
         this.categories = categories;
       },
       error: (err: any) => {
@@ -45,8 +49,10 @@ export class GastronomicOfferComponent implements OnInit {
    */
   loadEstablishments(): void {
     this.loading = true;
+    console.log('Cargando establecimientos...');
     this.gastronomicService.getEstablishments().subscribe({
       next: (data: any) => {
+        console.log('Establecimientos cargados:', data);
         this.establishments = data;
         this.filteredEstablishments = data;
         this.loading = false;
@@ -98,5 +104,12 @@ export class GastronomicOfferComponent implements OnInit {
       return `No hay restaurantes en la categoría "${this.selectedCategory}" por el momento.`;
     }
     return 'No hay establecimientos disponibles';
+  }
+
+  /**
+   * Navega hacia atrás
+   */
+  goBack(): void {
+    this.location.back();
   }
 }

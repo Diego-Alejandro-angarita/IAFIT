@@ -1,7 +1,54 @@
 .gastronomic-offer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+
+  // Header bar azul
+  .header-bar {
+    background: #24306E;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    .back-button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 0.5rem;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+
+      .back-arrow {
+        font-size: 1.8rem;
+        font-weight: bold;
+      }
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin: 0;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  // Contenido principal
+  .content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
 
   .header {
     text-align: center;
@@ -49,13 +96,13 @@
         color: #555;
 
         &:hover {
-          border-color: #3498db;
-          color: #3498db;
+          border-color: #24306E;
+          color: #24306E;
         }
 
         &.active {
-          background: #3498db;
-          border-color: #3498db;
+          background: #24306E;
+          border-color: #24306E;
           color: white;
         }
       }
@@ -168,7 +215,7 @@
 
         .category-tag {
           background: #e8f4f8;
-          color: #3498db;
+          color: #24306E;
           padding: 0.3rem 0.7rem;
           border-radius: 12px;
           font-size: 0.8rem;
@@ -199,7 +246,7 @@
   .loading {
     text-align: center;
     padding: 3rem;
-    color: #3498db;
+    color: #24306E;
     font-size: 1.1rem;
   }
 

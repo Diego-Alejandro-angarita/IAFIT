@@ -64,16 +64,13 @@ class Establishment(models.Model):
 
 
 class Category(models.Model):
-    """Categorías de establecimientos (e.g., Almuerzo, Café, Vegetariano)"""
+    """Categorías de establecimientos (e.g., Almuerzo, Café, Snacks)"""
     CATEGORY_CHOICES = [
-        ('almuerzo', 'Almuerzo'),
-        ('cafe', 'Café'),
-        ('vegetariano', 'Vegetariano'),
+        ('almuerzos', 'Almuerzos'),
         ('postres', 'Postres'),
-        ('bebidas', 'Bebidas'),
-        ('comida_rapida', 'Comida Rápida'),
-        ('internacional', 'Comida Internacional'),
-        ('saludable', 'Opción Saludable'),
+        ('desayunos', 'Desayunos'),
+        ('snacks', 'Snacks'),
+        ('cafe', 'Café'),
     ]
     
     name = models.CharField(max_length=100, choices=CATEGORY_CHOICES, unique=True)
