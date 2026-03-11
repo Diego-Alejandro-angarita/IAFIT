@@ -20,7 +20,7 @@ data = [
     "Profesor: Alejandra Ríos Ramírez. Títulos: Candidata a Doctora en Ética y Democracia por Universidad de Valencia, España (Filosofía Política / Ética)."
 ]
 
-sql = "INSERT INTO data_eafit_knowledge (id, node_id, text, metadata_, embedding) VALUES\n"
+sql = "INSERT INTO data_info_directorio (id, node_id, text, metadata_, embedding) VALUES\n"
 values = []
 
 for text in data:

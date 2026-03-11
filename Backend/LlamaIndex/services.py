@@ -35,7 +35,7 @@ def _get_vector_store():
         password=parsed.password,
         port=parsed.port or 5432,
         user=parsed.username,
-        table_name="eafit_knowledge",
+        table_name="info_directorio",
         embed_dim=3072 # models/gemini-embedding-001 output dimension expected by LlamaIndex
     )
 
@@ -82,7 +82,7 @@ def obtener_directorio():
             port=parsed.port or 5432
         )
         cur = conn.cursor()
-        cur.execute("SELECT text FROM data_eafit_knowledge LIMIT 1000;")
+        cur.execute("SELECT text FROM data_info_directorio LIMIT 1000;")
         rows = cur.fetchall()
         cur.close()
         conn.close()
