@@ -39,15 +39,54 @@ def _get_vector_store():
         embed_dim=3072 # models/gemini-embedding-001 output dimension expected by LlamaIndex
     )
 
+from .ia_service import buscar_ubicacion_semantica
+
 def consultar_rag(query: str):
-    vector_store = _get_vector_store()
-    indice = VectorStoreIndex.from_vector_store(
-        vector_store=vector_store,
-        embed_model=Settings.embed_model
-    )
+    contexto = "Información o contexto disponible para responder a la pregunta (usa sólo lo que sea útil):\n\n"
     
-    motor_consulta = indice.as_query_engine(llm=Settings.llm, embed_model=Settings.embed_model)
-    respuesta = motor_consulta.query(query)
+    # 1. Recuperar información del directorio (LlamaIndex PGVectorStore)
+    try:
+        vector_store = _get_vector_store()
+        indice = VectorStoreIndex.from_vector_store(
+            vector_store=vector_store,
+            embed_model=Settings.embed_model
+        )
+        retriever = indice.as_retriever(similarity_top_k=3)
+        nodos_directorio = retriever.retrieve(query)
+        
+        if nodos_directorio:
+            contexto += "--- DATOS DEL DIRECTORIO DE PROFESORES Y PERSONAL ---\n"
+            for nodo in nodos_directorio:
+                contexto += f"- {nodo.get_content()}\n"
+            contexto += "\n"
+    except Exception as e:
+        print(f"Error consultando el directorio: {e}")
+
+    # 2. Recuperar información de ubicaciones (SentenceTransformer + Supabase RPC)
+    try:
+        ubicaciones = buscar_ubicacion_semantica(query)
+        if ubicaciones:
+            contexto += "--- MAPA Y UBICACIONES DEL CAMPUS ---\n"
+            for u in ubicaciones:
+                contexto += f"- Bloque {u.get('codigo_bloque')}, Piso {u.get('piso')}, Descripción: {u.get('descripcion_semantica')}\n"
+            contexto += "\n"
+    except Exception as e:
+        print(f"Error consultando ubicaciones: {e}")
+
+    prompt = f"""
+    Eres el asistente virtual de la Universidad EAFIT.
+    Aquí tienes el contexto recuperado de nuestras bases de datos institucionales:
+    {contexto}
+    
+    Pregunta del usuario: {query}
+    
+    Instrucciones:
+    - Responde en español, de forma clara, amable y precisa.
+    - Si la información solicitada NO está en el contexto, indica educadamente que no tienes esos datos por el momento, pero que próximamente se agregarán más servicios y tablas de información institucional.
+    - No inventes información.
+    """
+    
+    respuesta = Settings.llm.complete(prompt)
     
     return str(respuesta)
 

@@ -78,7 +78,7 @@ const CAMPUS_BLOCKS: BlockInfo[] = [
 export class MapPage implements AfterViewInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/llamaindex/buscar/';
+  private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
 
   private map: any;
   private markers: Map<string, any> = new Map();

@@ -1,0 +1,59 @@
+[33mÔØ»[39m Building...
+[32mÔ£ö[39m Building...
+[35mPrerendered 0 static routes.[39m
+Application bundle generation failed. [8.763 seconds] - 2026-03-11T16:12:06.657Z
+
+Ôû▓ [WARNING] NG8113: RouterLink is not used within the template of ModulePage [plugin angular-compiler]
+
+    src/app/pages/module/module.page.ts:75:12:
+      75 Ôöé   imports: [RouterLink, FormsModule],
+         ÔòÁ             ~~~~~~~~~~
+
+
+X [ERROR] TS2307: Cannot find module 'leaflet' or its corresponding type declarations. [plugin angular-compiler]
+
+    src/app/pages/map/map.page.ts:109:27:
+      109 Ôöé     const L = await import('leaflet');
+          ÔòÁ                            ~~~~~~~~~
+
+
+X [ERROR] NG5002: Unclosed block "if" [plugin angular-compiler]
+
+    src/app/pages/module/module.page.html:2:2:
+      2 Ôöé   @if (isChat()) {
+        ÔòÁ   ~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component ModulePage.
+
+    src/app/pages/module/module.page.ts:76:15:
+      76 Ôöé   templateUrl: './module.page.html',
+         ÔòÁ                ~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] Could not resolve "leaflet"
+
+    src/app/pages/map/map.page.ts:211:31:
+      211 Ôöé         const L = await import('leaflet');
+          ÔòÁ                                ~~~~~~~~~
+
+  You can mark the path "leaflet" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle. You can also add ".catch()" here to handle this failure at run-time instead of bundle-time.
+
+
+X [ERROR] Could not resolve "leaflet"
+
+    src/app/pages/map/map.page.ts:211:31:
+      211 Ôöé         const L = await import('leaflet');
+          ÔòÁ                                ~~~~~~~~~
+
+  You can mark the path "leaflet" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle. You can also add ".catch()" here to handle this failure at run-time instead of bundle-time.
+
+
+X [ERROR] Could not resolve "node_modules/leaflet/dist/leaflet.css"
+
+    angular:styles/global:styles:2:8:
+      2 Ôöé @import 'node_modules/leaflet/dist/leaflet.css';
+        ÔòÁ         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "node_modules/leaflet/dist/leaflet.css" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+

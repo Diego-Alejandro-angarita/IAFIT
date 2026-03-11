@@ -82,7 +82,7 @@ export class ModulePage {
   private readonly destroyRef = inject(DestroyRef);
   
   private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/';
-  private readonly apiUrlBuscar = 'http://127.0.0.1:8000/api/llamaindex/buscar/';
+  private readonly apiUrlBuscar = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
 
   protected prompt = '';
   protected readonly lastQuery = signal('');
