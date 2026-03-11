@@ -4,17 +4,29 @@ import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 
-type BackendResponse = {
+export type BackendResponse = {
   respuesta?: string;
   error?: string;
 };
 
-type Professor = {
+export type Professor = {
   nombre: string;
   titulos: string;
 };
 
-type ModuleContent = {
+export type Ubicacion = {
+  codigo_bloque: string;
+  piso: number;
+  descripcion_semantica: string;
+  metadatos: Record<string, unknown>;
+  similarity: number;
+};
+
+export type BusquedaResponse = {
+  resultados: Ubicacion[];
+};
+
+export type ModuleContent = {
   title: string;
   description: string;
 };
@@ -68,14 +80,19 @@ export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  
   private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/';
+  private readonly apiUrlBuscar = 'http://127.0.0.1:8000/api/llamaindex/buscar/';
 
   protected prompt = '';
+  protected readonly lastQuery = signal('');
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly response = signal<BackendResponse | null>(null);
+  
   protected readonly chatHistory = signal<{ role: 'user' | 'bot'; text: string }[]>([]);
   protected readonly professorsList = signal<Professor[]>([]);
+  protected readonly resultados = signal<Ubicacion[]>([]);
   
   protected readonly searchQuery = signal('');
   protected readonly selectedFilter = signal('');
@@ -167,6 +184,29 @@ export class ModulePage {
       },
       error: () => {
         this.errorMessage.set('No se pudo conectar con el backend o ocurrió un error al procesar la solicitud.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  // Se mantuvo la lógica de branchEmmanuel para búsquedas de ubicación separada de chat
+  protected buscarUbicacionBackend(query: string): void {
+    if (!query.trim()) return;
+    
+    this.lastQuery.set(query);
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.resultados.set([]);
+
+    this.http.get<BusquedaResponse>(this.apiUrlBuscar, {
+      params: { q: query }
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (data) => {
+        this.resultados.set(data.resultados ?? []);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.errorMessage.set('No se pudo conectar con el backend para buscar ubicación.');
         this.loading.set(false);
       }
     });

@@ -60,8 +60,20 @@
               [class.bot-bubble]="msg.role === 'bot'"
             >
               <p>{{ msg.text }}</p>
+        @if (resultados().length) {
+          <div class="msg-row user">
+            <div class="msg-bubble user-bubble">
+              <p>{{ lastQuery() }}</p>
             </div>
           </div>
+          @for (r of resultados(); track r.codigo_bloque + '-' + r.piso) {
+            <div class="msg-row bot">
+              <div class="msg-bubble bot-bubble">
+                <p><strong>Bloque {{ r.codigo_bloque }} — Piso {{ r.piso }}</strong></p>
+                <p>{{ r.descripcion_semantica }}</p>
+              </div>
+            </div>
+          }
         }
 
         @if (loading()) {

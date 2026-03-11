@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomePage } from './pages/home/home.page';
 import { ModulePage } from './pages/module/module.page';
+import { MapPage } from './pages/map/map.page';
 
 export const routes: Routes = [
 	{
@@ -9,8 +10,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'map',
-		component: ModulePage,
-		data: { moduleKey: 'map' }
+		component: MapPage
 	},
 	{
 		path: 'classrooms',
