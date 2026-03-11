@@ -1,0 +1,449 @@
+/* ===== Module / Chat page — Mockup-matching light theme ===== */
+
+:host {
+  display: block;
+  font-family:
+    'Poppins',
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.page-root {
+  min-height: 100vh;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Shared header bar ---- */
+.chat-header,
+.module-header {
+  background: #24306e;
+  color: #fff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header-inner,
+.module-header-inner {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  text-decoration: none;
+  transition: background 200ms;
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.chat-header-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.chat-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #ffb800;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #24306e;
+}
+
+.chat-title {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #fff;
+}
+
+.chat-subtitle {
+  color: #bfdbfe;
+  font-size: 0.875rem;
+}
+
+.module-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* ---- Chat messages ---- */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1rem 10rem;
+  max-width: 56rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.chat-messages-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.msg-row {
+  display: flex;
+  &.bot {
+    justify-content: flex-start;
+  }
+  &.user {
+    justify-content: flex-end;
+  }
+}
+
+.msg-bubble {
+  max-width: 80%;
+  border-radius: 1rem;
+  padding: 0.75rem 1.25rem;
+  line-height: 1.6;
+}
+
+.bot-bubble {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  color: #1f2937;
+  border-bottom-left-radius: 0.375rem;
+  box-shadow:
+    0 0 6px rgba(0, 0, 0, 0.03),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.user-bubble {
+  background: #24306e;
+  color: #fff;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.error-bubble {
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+}
+
+/* Typing dots */
+.typing {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #9ca3af;
+  border-radius: 9999px;
+  animation: bounce-dot 0.6s ease-in-out infinite;
+  &:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+}
+
+@keyframes bounce-dot {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* ---- Chat input bar ---- */
+.chat-input-bar {
+  position: fixed;
+  bottom: 5rem;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 40;
+}
+
+.chat-input-inner {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.chat-input-field {
+  flex: 1;
+  background: rgba(243, 244, 246, 0.8);
+  backdrop-filter: blur(4px);
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+
+  input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #1f2937;
+  }
+}
+
+.send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: rgba(229, 231, 235, 0.8);
+  color: #9ca3af;
+  transition:
+    background 200ms,
+    color 200ms;
+
+  &.active {
+    background: rgba(255, 184, 0, 0.8);
+    color: #24306e;
+    &:hover {
+      background: rgba(255, 160, 0, 0.9);
+    }
+  }
+}
+
+/* ---- Module placeholder ---- */
+.module-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2rem 1rem 8rem;
+}
+
+.module-placeholder {
+  max-width: 32rem;
+  width: 100%;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  box-shadow:
+    0 0 6px rgba(0, 0, 0, 0.03),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.module-desc {
+  color: #6b7280;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.module-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 9999px;
+  color: #374151;
+  text-decoration: none;
+  font-weight: 500;
+  transition: border-color 200ms;
+  &:hover {
+    border-color: #24306e;
+  }
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1.25rem;
+  background: rgba(255, 184, 0, 0.8);
+  color: #24306e;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-weight: 500;
+  border: none;
+  transition: background 200ms;
+  &:hover {
+    background: rgba(255, 160, 0, 0.9);
+  }
+}
+
+/* ---- Directory Grid & Controls ---- */
+.directory-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto 1.5rem auto;
+}
+
+.search-bar {
+  flex: 1;
+  min-width: 250px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  svg {
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+
+  input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #1f2937;
+  }
+}
+
+.filter-dropdown {
+  select {
+    height: 100%;
+    min-height: 3rem;
+    padding: 0 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    border-radius: 0.75rem;
+    border: none;
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-family: inherit;
+    font-size: 1rem;
+    color: #1f2937;
+    cursor: pointer;
+    appearance: auto;
+  }
+}
+
+.directory-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.prof-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 200ms;
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.prof-avatar {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  background: #24306e;
+  color: #fff;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.prof-details {
+  flex: 1;
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+  }
+  p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+}
+
+/* ---- Loading / Error states ---- */
+.loading-state,
+.error-state,
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+  width: 100%;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(229, 231, 235, 1);
+  border-top-color: #24306e;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,155 @@
+<div class="home-root">
+  <!-- Header — matches mockup: bg-[#24306e] text-white shadow-lg -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <svg class="eafit-logo" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+          <text x="60" y="30" text-anchor="middle" fill="white" font-size="28" font-weight="900"
+            font-family="Impact,'Arial Black',sans-serif">EAFIT</text>
+        </svg>
+        <div>
+          <h1 class="header-title">Asistente IAFIT</h1>
+          <p class="header-subtitle">Bienvenido, Estudiante</p>
+        </div>
+      </div>
+      <div  class="header-right">
+        <a routerLink="/profile" class="icon-btn profile-btn" aria-label="Perfil">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- Hero — ContainerScroll mockup -->
+    <section class="hero-scroll">
+      <div class="hero-title-area">
+        <h2 class="hero-heading">Tu compañero inteligente</h2>
+        <p class="hero-sub">Explora todo lo que EAFIT tiene para ti</p>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-inner">
+          <div class="action-grid">
+            @for (a of quickActions; track a.id) {
+              <a [routerLink]="'/' + a.id" class="action-btn">
+                <div class="action-icon" [class]="a.colorClass">
+                  @switch (a.id) {
+                    @case ('map') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                    }
+                    @case ('classrooms') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    }
+                    @case ('restaurants') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a2 2 0 1 1 0 4H4"/><path d="M6 2v2"/></svg>
+                    }
+                    @case ('events') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+                    }
+                  }
+                </div>
+                <span class="action-label">{{ a.title }}</span>
+              </a>
+            }
+            @for (f of newFeatures; track f.id) {
+              <a [routerLink]="'/' + f.id" class="action-btn">
+                <div class="action-icon" [class]="f.colorClass">
+                  @switch (f.id) {
+                    @case ('calendar') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></svg>
+                    }
+                    @case ('directory') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    }
+                    @case ('groups') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    }
+                  }
+                </div>
+                <span class="action-label">{{ f.title }}</span>
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search — matches mockup: bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg -->
+    <section class="search-section">
+      <div class="search-bar">
+        <div class="search-inner">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+          </svg>
+          <input #searchInput type="text" placeholder="¿Qué necesitas saber sobre EAFIT?" class="search-input" />
+          <a routerLink="/chat" [queryParams]="{ q: searchInput.value }" class="search-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+            </svg>
+            <span>Preguntar</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ — matches mockup: bg-white/90 glass card, 2-col grid -->
+    <section class="faq-section">
+      <div class="faq-card">
+        <div class="faq-header">
+          <div class="faq-icon-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <path d="M12 17h.01" />
+            </svg>
+          </div>
+          <h2 class="faq-title">Preguntas Frecuentes</h2>
+        </div>
+        <div class="faq-grid">
+          @for (q of frequentQuestions; track q) {
+            <a routerLink="/chat" [queryParams]="{ q: q }" class="faq-item">
+              <span class="faq-text">{{ q }}</span>
+              <svg class="faq-arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+              </svg>
+            </a>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Campus Status — matches mockup: 3 gradient cards -->
+    <section class="status-section">
+      <h2 class="status-heading">Estado del Campus</h2>
+      <div class="status-grid">
+        <article class="status-card navy">
+          <div>
+            <h3 class="status-label">Horario Biblioteca</h3>
+            <p class="status-value">7:00 AM - 10:00 PM</p>
+          </div>
+          <p class="status-meta navy-meta">Lunes a Sábado - Bloque 32</p>
+        </article>
+        <article class="status-card gold">
+          <div>
+            <h3 class="status-label">Eventos Hoy</h3>
+            <p class="status-value">5 Actividades</p>
+          </div>
+          <a routerLink="/events" class="status-link">Ver calendario completo →</a>
+        </article>
+        <article class="status-card emerald">
+          <div>
+            <h3 class="status-label">Aulas Disponibles</h3>
+            <p class="status-value">23 Espacios</p>
+          </div>
+          <p class="status-meta emerald-meta">Consulta disponibilidad en tiempo real</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>
