@@ -32,20 +32,24 @@ def _get_vector_store():
         port=parsed.port or 5432,
         user=parsed.username,
         table_name="eafit_knowledge",
-        embed_dim=3072
+        embed_dim=3072 # models/gemini-embedding-001 output dimension expected by LlamaIndex
     )
 
 # ── RAG (igual que tu compañero) ────────────────────────────
+from .ia_service import buscar_ubicacion_semantica
+
 def consultar_rag(query: str):
     vector_store = _get_vector_store()
     indice = VectorStoreIndex.from_vector_store(
         vector_store=vector_store,
         embed_model=Settings.embed_model
     )
-    motor = indice.as_query_engine(llm=Settings.llm, embed_model=Settings.embed_model)
-    return str(motor.query(query))
+    
+    motor_consulta = indice.as_query_engine(llm=Settings.llm, embed_model=Settings.embed_model)
+    respuesta = motor_consulta.query(query)
+    
+    return str(respuesta)
 
-# ── Indexar (igual que tu compañero) ────────────────────────
 def indexar_documento(texto: str):
     vector_store = _get_vector_store()
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
@@ -56,6 +60,48 @@ def indexar_documento(texto: str):
         show_progress=True
     )
     return True
+
+import psycopg2
+
+def obtener_directorio():
+    db_url = os.environ.get("SUPABASE_DB_URL")
+    if not db_url:
+        return []
+        
+    parsed = urlparse(db_url)
+    
+    try:
+        conn = psycopg2.connect(
+            dbname=parsed.path[1:],
+            user=parsed.username,
+            password=parsed.password,
+            host=parsed.hostname,
+            port=parsed.port or 5432
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT text FROM data_info_directorio LIMIT 1000;")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        profesores = []
+        for row in rows:
+            texto = row[0]
+            if "Profesor:" in texto and "Títulos:" in texto:
+                partes = texto.split("Títulos:")
+                nombre = partes[0].replace("Profesor:", "").strip().rstrip(".")
+                titulos = partes[1].strip().rstrip(".")
+                profesores.append({
+                    "nombre": nombre,
+                    "titulos": titulos
+                })
+        
+        # Ordenar alfabéticamente
+        profesores.sort(key=lambda x: x["nombre"])
+        return profesores
+    except Exception as e:
+        print(f"Error extrayendo directorio: {e}")
+        return []
 
 # ── Eventos IA (tu función original, sin cambios) ───────────
 from datetime import date

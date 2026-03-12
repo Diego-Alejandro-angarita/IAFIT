@@ -1,22 +1,44 @@
 // src/app/pages/module/module.page.ts
 
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { EventosService, Evento } from '../../services/eventos.service';
 
-type RAGResponse = {
+export type RAGResponse = {
   respuesta: string;
 };
 
-type ChatMessage = {
+export type ChatMessage = {
   role: 'user' | 'bot';
   text: string;
 };
 
-type ModuleContent = {
+export type BackendResponse = {
+  respuesta?: string;
+  error?: string;
+};
+
+export type Professor = {
+  nombre: string;
+  titulos: string;
+};
+
+export type Ubicacion = {
+  codigo_bloque: string;
+  piso: number;
+  descripcion_semantica: string;
+  metadatos: Record<string, unknown>;
+  similarity: number;
+};
+
+export type BusquedaResponse = {
+  resultados: Ubicacion[];
+};
+
+export type ModuleContent = {
   title: string;
   description: string;
 };
@@ -43,16 +65,58 @@ export class ModulePage implements OnInit {
   private readonly route          = inject(ActivatedRoute);
   private readonly http           = inject(HttpClient);
   private readonly eventosService = inject(EventosService);
+  private readonly destroyRef     = inject(DestroyRef);
+
   private readonly ragUrl         = 'http://127.0.0.1:8001/api/query';
   private readonly askUrl         = 'http://127.0.0.1:8001/api/ask/';
+  private readonly apiUrl         = 'http://127.0.0.1:8001/api/llamaindex/';
+  private readonly apiUrlBuscar   = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
 
   // ── Chat ──────────────────────────────────────────────────
   protected prompt                = '';
+  protected readonly lastQuery    = signal('');
   protected readonly loading      = signal(false);
   protected readonly errorMessage = signal('');
+  protected readonly response     = signal<BackendResponse | null>(null);
   protected readonly messages     = signal<ChatMessage[]>([
     { role: 'bot', text: '¡Hola! Soy el Asistente Virtual IAFIT. Puedes preguntarme sobre eventos, servicios o cualquier información del campus.' }
   ]);
+  
+  // ── Directory & Search ────────────────────────────────────
+  protected readonly chatHistory  = signal<{ role: 'user' | 'bot'; text: string }[]>([]);
+  protected readonly professorsList = signal<Professor[]>([]);
+  protected readonly resultados   = signal<Ubicacion[]>([]);
+  
+  protected readonly searchQuery  = signal('');
+  protected readonly selectedFilter = signal('');
+
+  protected readonly availableFilters = computed(() => {
+    const list = this.professorsList();
+    const categories = new Set<string>();
+    
+    for (const prof of list) {
+        const match = prof.titulos.match(/\(([^)]+)\)$/);
+        if (match && match[1]) {
+            const cats = match[1].split('/').map(c => c.trim());
+            cats.forEach(c => categories.add(c));
+        }
+    }
+    return Array.from(categories).sort();
+  });
+
+  protected readonly filteredProfessors = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    const filter = this.selectedFilter();
+    
+    return this.professorsList().filter(prof => {
+      const matchesText = prof.nombre.toLowerCase().includes(query) || 
+                          prof.titulos.toLowerCase().includes(query);
+      
+      const matchesFilter = filter ? prof.titulos.includes(filter) : true;
+      
+      return matchesText && matchesFilter;
+    });
+  });
 
   // ── Events ────────────────────────────────────────────────
   protected readonly eventos            = signal<Evento[]>([]);
@@ -95,15 +159,25 @@ export class ModulePage implements OnInit {
     this.route.snapshot.data['moduleKey'] === 'events'
   );
 
+  protected readonly isDirectory = computed(() => {
+    const key = this.route.snapshot.data['moduleKey'] as string | undefined;
+    return key === 'directory';
+  });
+
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      if (!this.isChat()) return;
-      const query = params.get('q')?.trim();
-      if (query) {
-        this.prompt = query;
-        this.askBackend();
+      if (this.isChat()) {
+        const query = params.get('q')?.trim();
+        if (query) {
+          this.prompt = query;
+          this.askBackend();
+        }
       }
     });
+
+    if (this.isDirectory()) {
+      this.fetchDirectory();
+    }
   }
 
   ngOnInit(): void {
@@ -134,7 +208,7 @@ export class ModulePage implements OnInit {
           this.http.post<{ message_es: string }>(this.askUrl, {
             query: pregunta,
             contexto_eventos: eventos
-          }).subscribe({
+          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (data) => {
               this.messages.update(msgs => [...msgs, { role: 'bot', text: data.message_es }]);
               this.loading.set(false);
@@ -147,7 +221,7 @@ export class ModulePage implements OnInit {
         },
         error: () => {
           // Si falla cargar eventos, usa el RAG normal
-          this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).subscribe({
+          this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (data) => {
               this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
               this.loading.set(false);
@@ -160,7 +234,7 @@ export class ModulePage implements OnInit {
         }
       });
     } else {
-      this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).subscribe({
+      this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
           this.loading.set(false);
@@ -171,6 +245,45 @@ export class ModulePage implements OnInit {
         }
       });
     }
+  }
+
+  // ── Búsqueda de Ubicación ────────────────────────────────────
+  protected buscarUbicacionBackend(query: string): void {
+    if (!query.trim()) return;
+    
+    this.lastQuery.set(query);
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.resultados.set([]);
+
+    this.http.get<BusquedaResponse>(this.apiUrlBuscar, {
+      params: { q: query }
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (data) => {
+        this.resultados.set(data.resultados ?? []);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.errorMessage.set('No se pudo conectar con el backend para buscar ubicación.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  // ── Directorio ─────────────────────────────────────────────
+  protected fetchDirectory(): void {
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.http.get<Professor[]>(`${this.apiUrl}directorio/`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (data) => {
+        this.professorsList.set(data);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.errorMessage.set('No se pudo cargar el directorio de profesores.');
+        this.loading.set(false);
+      }
+    });
   }
 
   // ── Events ─────────────────────────────────────────────────

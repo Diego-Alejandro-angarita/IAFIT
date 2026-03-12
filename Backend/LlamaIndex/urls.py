@@ -9,4 +9,6 @@ urlpatterns = [
     path('api/query', views.query_llama_index, name='query_noslash'),
     path('api/index/', views.index_document, name='index'),
     path('api/ask/', views.ask_about_events, name='ask_events'),
+    path('buscar/', views.buscar_campus, name='buscar_campus'),
+    path('directorio/', views.get_directory, name='get_directory'),
 ]

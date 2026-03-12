@@ -5,9 +5,11 @@ import pytz
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
 from .models import Event
-from .services import consultar_rag, indexar_documento, consultar_eventos_ia
+from .services import consultar_rag, indexar_documento, obtener_directorio
+from .ia_service import buscar_ubicacion_semantica, consultar_eventos_ia
 
 # Zona horaria de Colombia
 BOGOTA_TZ = pytz.timezone('America/Bogota')
@@ -51,6 +53,46 @@ def index_document(request):
             traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Método no permitido. Use POST.'}, status=405)
+
+@require_GET
+def buscar_campus(request):
+    query = request.GET.get('q', '')
+
+    if not query:
+        return JsonResponse({'error': 'Debes enviar una pregunta en el parámetro "q"'}, status=400)
+
+    try:
+        resultados = buscar_ubicacion_semantica(query)
+        return JsonResponse({'resultados': resultados}, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def get_directory(request):
+    if request.method == 'GET':
+        directorio = obtener_directorio()
+        return JsonResponse(directorio, safe=False, status=200)
+        
+    return JsonResponse({'error': 'Método no permitido. Use GET.'}, status=405)
+
+@require_GET
+def buscar_campus(request):
+    query = request.GET.get('q', '')
+
+    if not query:
+        return JsonResponse({'error': 'Debes enviar una pregunta en el parámetro "q"'}, status=400)
+
+    try:
+        resultados = buscar_ubicacion_semantica(query)
+        return JsonResponse({'resultados': resultados}, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def get_directory(request):
+    if request.method == 'GET':
+        directorio = obtener_directorio()
+        return JsonResponse(directorio, safe=False, status=200)
+        
+    return JsonResponse({'error': 'Método no permitido. Use GET.'}, status=405)
 
 @csrf_exempt
 def ask_about_events(request):
