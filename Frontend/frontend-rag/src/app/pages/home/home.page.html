@@ -1,5 +1,5 @@
 <div class="home-root">
-  <!-- Header — matches mockup: bg-[#24306e] text-white shadow-lg -->
+  <!-- Header -->
   <header class="header">
     <div class="header-inner">
       <div class="header-left">
@@ -12,7 +12,7 @@
           <p class="header-subtitle">Bienvenido, Estudiante</p>
         </div>
       </div>
-      <div  class="header-right">
+      <div class="header-right">
         <a routerLink="/profile" class="icon-btn profile-btn" aria-label="Perfil">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -24,7 +24,7 @@
   </header>
 
   <div class="content">
-    <!-- Hero — ContainerScroll mockup -->
+    <!-- Hero -->
     <section class="hero-scroll">
       <div class="hero-title-area">
         <h2 class="hero-heading">Tu compañero inteligente</h2>
@@ -77,27 +77,32 @@
       </div>
     </section>
 
-    <!-- Search — matches mockup: bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg -->
+    <!-- Search -->
     <section class="search-section">
       <div class="search-bar">
         <div class="search-inner">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
-          <input #searchInput type="text" placeholder="¿Qué necesitas saber sobre EAFIT?" class="search-input" />
-          <a routerLink="/chat" [queryParams]="{ q: searchInput.value }" class="search-btn">
+          <input
+            type="text"
+            [(ngModel)]="userInput"
+            placeholder="¿Qué necesitas saber sobre EAFIT?"
+            class="search-input"
+            (keydown.enter)="navegarAlChat(userInput)" />
+          <button class="search-btn" (click)="navegarAlChat(userInput)">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/>
             </svg>
             <span>Preguntar</span>
-          </a>
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- FAQ — matches mockup: bg-white/90 glass card, 2-col grid -->
+    <!-- FAQ -->
     <section class="faq-section">
       <div class="faq-card">
         <div class="faq-header">
@@ -124,7 +129,7 @@
       </div>
     </section>
 
-    <!-- Campus Status — matches mockup: 3 gradient cards -->
+    <!-- Campus Status -->
     <section class="status-section">
       <h2 class="status-heading">Estado del Campus</h2>
       <div class="status-grid">
@@ -138,7 +143,7 @@
         <article class="status-card gold">
           <div>
             <h3 class="status-label">Eventos Hoy</h3>
-            <p class="status-value">5 Actividades</p>
+            <p class="status-value">{{ eventosHoy }} {{ eventosHoy === 1 ? 'Actividad' : 'Actividades' }}</p>
           </div>
           <a routerLink="/events" class="status-link">Ver calendario completo →</a>
         </article>

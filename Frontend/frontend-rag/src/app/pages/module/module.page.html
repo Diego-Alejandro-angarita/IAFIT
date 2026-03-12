@@ -1,20 +1,15 @@
 <div class="page-root">
+
+  <!-- ══════════ CHAT ══════════ -->
   @if (isChat()) {
-    <!-- Chat page — matches Chat.tsx mockup -->
     <header class="chat-header">
       <div class="chat-header-inner">
         <a routerLink="/" class="back-btn" aria-label="Volver">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
         </a>
         <div class="chat-header-info">
           <div class="chat-avatar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
           </div>
           <div>
             <h1 class="chat-title">Asistente IAFIT</h1>
@@ -23,29 +18,15 @@
         </div>
       </div>
     </header>
-
     <div class="chat-messages">
       <div class="chat-messages-inner">
-        <!-- Bot welcome -->
-        <div class="msg-row bot">
-          <div class="msg-bubble bot-bubble">
-            <p>¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy?</p>
-          </div>
-        </div>
-
-        @if (response(); as api) {
-          <div class="msg-row user">
-            <div class="msg-bubble user-bubble">
-              <p>{{ prompt || 'Consulta enviada' }}</p>
-            </div>
-          </div>
-          <div class="msg-row bot">
-            <div class="msg-bubble bot-bubble">
-              <p>{{ api.message_es }}</p>
+        @for (msg of messages(); track $index) {
+          <div class="msg-row" [class.user]="msg.role==='user'" [class.bot]="msg.role==='bot'">
+            <div class="msg-bubble" [class.user-bubble]="msg.role==='user'" [class.bot-bubble]="msg.role==='bot'">
+              <p>{{ msg.text }}</p>
             </div>
           </div>
         }
-
         @if (loading()) {
           <div class="msg-row bot">
             <div class="msg-bubble bot-bubble typing">
@@ -53,51 +34,189 @@
             </div>
           </div>
         }
-
-        @if (errorMessage()) {
-          <div class="msg-row bot">
-            <div class="msg-bubble bot-bubble error-bubble">
-              <p>{{ errorMessage() }}</p>
-            </div>
-          </div>
-        }
       </div>
     </div>
-
-    <!-- Chat input — fixed above dock -->
     <div class="chat-input-bar">
       <div class="chat-input-inner">
         <div class="chat-input-field">
-          <input
-            type="text"
-            [(ngModel)]="prompt"
-            placeholder="Escribe tu pregunta..."
-            (keydown.enter)="askBackend()"
-          />
+          <input type="text" [(ngModel)]="prompt" placeholder="Escribe tu pregunta..." (keydown.enter)="askBackend()" />
         </div>
         <button type="button" class="send-btn" [class.active]="prompt.trim()" (click)="askBackend()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
-            <path d="m21.854 2.147-10.94 10.939"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>
         </button>
       </div>
     </div>
+
+  <!-- ══════════ EVENTS ══════════ -->
+  } @else if (isEvents()) {
+
+    @if (eventoSeleccionado(); as evento) {
+      <!-- DETALLE -->
+      <nav class="events-navbar">
+        <div class="events-navbar-inner">
+          <button class="navbar-brand-btn" (click)="volverALista()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            <span class="brand-ia">IA</span><span class="brand-fit">FIT</span>
+            <span class="brand-sub">| Agenda del Campus</span>
+          </button>
+        </div>
+      </nav>
+      <div class="events-body">
+        <div class="detail-wrapper">
+          <div class="detail-card">
+            <div class="detail-header">
+              <h3>{{ evento.title }}</h3>
+              <span class="detail-date">📅 {{ formatearFecha(evento.event_date) }}</span>
+            </div>
+            <div class="detail-body">
+              <p class="detail-label">DESCRIPCIÓN</p>
+              <p class="detail-desc">{{ evento.description }}</p>
+              <hr/>
+              <div class="detail-info-row">
+                <div class="info-box">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <p class="info-title">Ubicación</p>
+                  <p class="info-val">{{ evento.location || 'Ubicación por confirmar' }}</p>
+                </div>
+                <div class="info-box">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  <p class="info-title">Fecha</p>
+                  <p class="info-val">{{ formatearFecha(evento.event_date) }}</p>
+                </div>
+                <div class="info-box">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <p class="info-title">Hora</p>
+                  <p class="info-val">{{ evento.event_time }}</p>
+                </div>
+              </div>
+              <button class="btn-volver" (click)="volverALista()">← Volver a la Agenda</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    } @else {
+      <!-- LISTA -->
+      <nav class="events-navbar">
+        <div class="events-navbar-inner">
+          <span class="navbar-brand-static">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            <span class="brand-ia">IA</span><span class="brand-fit">FIT</span>
+            <span class="brand-sub">| Agenda del Campus</span>
+          </span>
+          <span class="navbar-date">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            {{ todayDisplay }}
+          </span>
+        </div>
+      </nav>
+
+      <div class="events-body">
+        <div class="events-container">
+
+          <!-- Título + filtros -->
+          <div class="top-bar">
+            <div>
+              <h2 class="page-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003087" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><line x1="8" x2="16" y1="14" y2="14"/><line x1="8" x2="13" y1="18" y2="18"/></svg>
+                Agenda del Campus
+              </h2>
+              <p class="page-sub">Eventos académicos y culturales del campus</p>
+            </div>
+            <div class="filters">
+              <div class="vista-selector">
+                <button class="vista-btn" [class.active]="vistaActiva()==='hoy'"    (click)="cargarEventos('hoy')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                  Hoy
+                </button>
+                <button class="vista-btn" [class.active]="vistaActiva()==='semana'" (click)="cargarEventos('semana')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  Esta semana
+                </button>
+                <button class="vista-btn" [class.active]="vistaActiva()==='todos'"  (click)="cargarEventos('todos')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><line x1="8" x2="16" y1="14" y2="14"/><line x1="8" x2="13" y1="18" y2="18"/></svg>
+                  Todos
+                </button>
+              </div>
+              <div class="date-input-group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="date" [value]="fechaBusqueda()" (change)="setFechaBusqueda(($any($event.target)).value)" />
+                <button (click)="buscarPorFecha()">Buscar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cargando -->
+          @if (eventosLoading()) {
+            <div class="empty-state">
+              <div class="spinner"></div>
+              <p class="text-muted">Cargando eventos...</p>
+            </div>
+          }
+
+          <!-- Error -->
+          @if (eventosError() && !eventosLoading()) {
+            <div class="empty-state">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#dee2e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+              <h4 class="text-muted">{{ eventosError() }}</h4>
+            </div>
+          }
+
+          <!-- Sin resultados -->
+          @if (!eventosLoading() && !eventosError() && eventosPorFecha().length === 0) {
+            <div class="empty-state">
+              <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><line x1="10" x2="14" y1="15" y2="19"/><line x1="14" x2="10" y1="15" y2="19"/></svg>
+              <h4 class="text-muted">No hay eventos para hoy</h4>
+              <p class="text-muted">Vuelve pronto para ver las actividades del campus.</p>
+            </div>
+          }
+
+          <!-- Grilla — replica Bootstrap row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 -->
+          @if (!eventosLoading() && !eventosError() && eventosPorFecha().length > 0) {
+            <div class="events-row">
+              @for (group of eventosPorFecha(); track group.date) {
+                @for (evento of group.events; track evento.id) {
+                  <div class="events-col">
+                    <div class="event-card" (click)="verDetalle(evento)">
+                      <span class="pill-base date-pill" [class.today-pill]="esHoy(group.date)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                        @if (esHoy(group.date)) { Hoy — {{ formatearFecha(group.date) }} }
+                        @else { {{ formatearFecha(group.date) }} }
+                      </span>
+                      <div class="card-title">{{ evento.title }}</div>
+                      <p class="card-text">{{ evento.description.slice(0,120) }}{{ evento.description.length > 120 ? '...' : '' }}</p>
+                      <div class="event-info-bar">
+                        <span class="location">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                          {{ evento.location || 'Ubicación por confirmar' }}
+                        </span>
+                        <span class="pill-base">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {{ evento.event_time }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          }
+
+        </div>
+      </div>
+    }
+
+  <!-- ══════════ MÓDULO GENÉRICO ══════════ -->
   } @else {
-    <!-- Generic module page -->
     <header class="module-header">
       <div class="module-header-inner">
         <a routerLink="/" class="back-btn" aria-label="Volver">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
         </a>
         <h1 class="module-title">{{ content().title }}</h1>
       </div>
     </header>
-
     <div class="module-content">
       <div class="module-placeholder">
         <p class="module-desc">{{ content().description }}</p>
@@ -108,4 +227,5 @@
       </div>
     </div>
   }
+
 </div>
