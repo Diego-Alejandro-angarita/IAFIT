@@ -16,7 +16,7 @@ export interface Evento {
 @Injectable({ providedIn: 'root' })
 export class EventosService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/events/';
+  private readonly apiUrl = 'http://127.0.0.1:8001/api/events/';
 
   // Mantenemos tu lógica original para vistas
   getEventos(vista: 'hoy' | 'semana' | 'todos' = 'hoy', fecha?: string): Observable<Evento[]> {

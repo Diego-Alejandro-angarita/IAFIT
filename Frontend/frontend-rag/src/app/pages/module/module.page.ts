@@ -43,8 +43,8 @@ export class ModulePage implements OnInit {
   private readonly route          = inject(ActivatedRoute);
   private readonly http           = inject(HttpClient);
   private readonly eventosService = inject(EventosService);
-  private readonly ragUrl         = 'http://127.0.0.1:8000/api/query';
-  private readonly askUrl         = 'http://127.0.0.1:8000/api/ask/';
+  private readonly ragUrl         = 'http://127.0.0.1:8001/api/query';
+  private readonly askUrl         = 'http://127.0.0.1:8001/api/ask/';
 
   // ── Chat ──────────────────────────────────────────────────
   protected prompt                = '';
@@ -166,7 +166,7 @@ export class ModulePage implements OnInit {
           this.loading.set(false);
         },
         error: () => {
-          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8000/' }]);
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8001/' }]);
           this.loading.set(false);
         }
       });
