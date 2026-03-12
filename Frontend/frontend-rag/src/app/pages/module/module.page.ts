@@ -1,8 +1,20 @@
-import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
+// src/app/pages/module/module.page.ts
+
+import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { EventosService, Evento } from '../../services/eventos.service';
+
+export type RAGResponse = {
+  respuesta: string;
+};
+
+export type ChatMessage = {
+  role: 'user' | 'bot';
+  text: string;
+};
 
 export type BackendResponse = {
   respuesta?: string;
@@ -32,42 +44,15 @@ export type ModuleContent = {
 };
 
 const MODULE_CONTENT: Record<string, ModuleContent> = {
-  map: {
-    title: 'Campus y Ubicacion',
-    description: 'Vista para integrar mapa interactivo y navegacion por bloques.'
-  },
-  classrooms: {
-    title: 'Aulas Disponibles',
-    description: 'Vista para mostrar disponibilidad de aulas en tiempo real.'
-  },
-  restaurants: {
-    title: 'Restaurantes',
-    description: 'Vista para listar menus, horarios y ubicacion de cafeterias.'
-  },
-  events: {
-    title: 'Eventos',
-    description: 'Vista para agenda de eventos academicos y culturales.'
-  },
-  calendar: {
-    title: 'Calendario Academico',
-    description: 'Vista para fechas clave, entregas y periodos institucionales.'
-  },
-  directory: {
-    title: 'Directorio',
-    description: 'Vista para contactos de profesores y personal administrativo.'
-  },
-  groups: {
-    title: 'Grupos y Semilleros',
-    description: 'Vista para comunidades estudiantiles y semilleros de investigacion.'
-  },
-  profile: {
-    title: 'Perfil',
-    description: 'Vista para datos de usuario, rol y configuraciones personales.'
-  },
-  chat: {
-    title: 'Asistente IA',
-    description: 'Vista para consultas en lenguaje natural sobre servicios IAFIT.'
-  }
+  map:         { title: 'Campus y Ubicacion',      description: 'Vista para integrar mapa interactivo y navegacion por bloques.' },
+  classrooms:  { title: 'Aulas Disponibles',        description: 'Vista para mostrar disponibilidad de aulas en tiempo real.' },
+  restaurants: { title: 'Restaurantes',             description: 'Vista para listar menus, horarios y ubicacion de cafeterias.' },
+  events:      { title: 'Agenda del Campus',         description: 'Eventos académicos y culturales del campus.' },
+  calendar:    { title: 'Calendario Academico',     description: 'Vista para fechas clave, entregas y periodos institucionales.' },
+  directory:   { title: 'Directorio',               description: 'Vista para contactos de profesores y personal administrativo.' },
+  groups:      { title: 'Grupos y Semilleros',       description: 'Vista para comunidades estudiantiles y semilleros de investigacion.' },
+  profile:     { title: 'Perfil',                   description: 'Vista para datos de usuario, rol y configuraciones personales.' },
+  chat:        { title: 'Asistente IA',             description: 'Vista para consultas en lenguaje natural sobre servicios IAFIT.' },
 };
 
 @Component({
@@ -76,25 +61,33 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
   templateUrl: './module.page.html',
   styleUrl: './module.page.scss'
 })
-export class ModulePage {
-  private readonly route = inject(ActivatedRoute);
-  private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
-  
-  private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/';
-  private readonly apiUrlBuscar = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
+export class ModulePage implements OnInit {
+  private readonly route          = inject(ActivatedRoute);
+  private readonly http           = inject(HttpClient);
+  private readonly eventosService = inject(EventosService);
+  private readonly destroyRef     = inject(DestroyRef);
 
-  protected prompt = '';
-  protected readonly lastQuery = signal('');
-  protected readonly loading = signal(false);
+  private readonly ragUrl         = 'http://127.0.0.1:8001/api/query';
+  private readonly askUrl         = 'http://127.0.0.1:8001/api/ask/';
+  private readonly apiUrl         = 'http://127.0.0.1:8001/api/llamaindex/';
+  private readonly apiUrlBuscar   = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
+
+  // ── Chat ──────────────────────────────────────────────────
+  protected prompt                = '';
+  protected readonly lastQuery    = signal('');
+  protected readonly loading      = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly response = signal<BackendResponse | null>(null);
+  protected readonly response     = signal<BackendResponse | null>(null);
+  protected readonly messages     = signal<ChatMessage[]>([
+    { role: 'bot', text: '¡Hola! Soy el Asistente Virtual IAFIT. Puedes preguntarme sobre eventos, servicios o cualquier información del campus.' }
+  ]);
   
-  protected readonly chatHistory = signal<{ role: 'user' | 'bot'; text: string }[]>([]);
+  // ── Directory & Search ────────────────────────────────────
+  protected readonly chatHistory  = signal<{ role: 'user' | 'bot'; text: string }[]>([]);
   protected readonly professorsList = signal<Professor[]>([]);
-  protected readonly resultados = signal<Ubicacion[]>([]);
+  protected readonly resultados   = signal<Ubicacion[]>([]);
   
-  protected readonly searchQuery = signal('');
+  protected readonly searchQuery  = signal('');
   protected readonly selectedFilter = signal('');
 
   protected readonly availableFilters = computed(() => {
@@ -125,18 +118,46 @@ export class ModulePage {
     });
   });
 
-  protected readonly content = computed(() => {
-    const key = this.route.snapshot.data['moduleKey'] as string | undefined;
-    return (key && MODULE_CONTENT[key]) || {
-      title: 'Modulo',
-      description: 'Contenido pendiente de configurar.'
-    };
+  // ── Events ────────────────────────────────────────────────
+  protected readonly eventos            = signal<Evento[]>([]);
+  protected readonly eventoSeleccionado = signal<Evento | null>(null);
+  protected readonly eventosLoading     = signal(false);
+  protected readonly eventosError       = signal('');
+  protected readonly vistaActiva        = signal<'hoy' | 'semana' | 'todos'>('hoy');
+  protected readonly fechaBusqueda      = signal('');
+
+  // Fecha actual en zona horaria de Colombia
+  protected readonly today = (() => {
+    const now = new Date();
+    const bogota = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+    const y = bogota.getFullYear();
+    const m = String(bogota.getMonth() + 1).padStart(2, '0');
+    const d = String(bogota.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  })();
+
+  protected readonly eventosPorFecha = computed(() => {
+    const mapa = new Map<string, Evento[]>();
+    for (const e of this.eventos()) {
+      if (!mapa.has(e.event_date)) mapa.set(e.event_date, []);
+      mapa.get(e.event_date)!.push(e);
+    }
+    return Array.from(mapa.entries()).map(([date, events]) => ({ date, events }));
   });
 
-  protected readonly isChat = computed(() => {
+  // ── Computed flags ─────────────────────────────────────────
+  protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
-    return key === 'chat';
+    return (key && MODULE_CONTENT[key]) || { title: 'Modulo', description: 'Contenido pendiente de configurar.' };
   });
+
+  protected readonly isChat = computed(() =>
+    this.route.snapshot.data['moduleKey'] === 'chat'
+  );
+
+  protected readonly isEvents = computed(() =>
+    this.route.snapshot.data['moduleKey'] === 'events'
+  );
 
   protected readonly isDirectory = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -159,37 +180,74 @@ export class ModulePage {
     }
   }
 
-  protected askBackend(): void {
-    if (!this.isChat() || !this.prompt.trim()) {
-      return;
+  ngOnInit(): void {
+    if (this.isEvents()) {
+      this.cargarEventos('hoy');
     }
-
-    const currentPrompt = this.prompt.trim();
-    this.chatHistory.update((h) => [...h, { role: 'user', text: currentPrompt }]);
-
-    this.loading.set(true);
-    this.errorMessage.set('');
-    this.prompt = '';
-
-    const payload = { query: currentPrompt };
-
-    this.http.post<BackendResponse>(`${this.apiUrl}query/`, payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (data) => {
-        if (data.respuesta) {
-          this.chatHistory.update((h) => [...h, { role: 'bot', text: data.respuesta! }]);
-        } else if (data.error) {
-          this.errorMessage.set(data.error);
-        }
-        this.loading.set(false);
-      },
-      error: () => {
-        this.errorMessage.set('No se pudo conectar con el backend o ocurrió un error al procesar la solicitud.');
-        this.loading.set(false);
-      }
-    });
   }
 
-  // Se mantuvo la lógica de branchEmmanuel para búsquedas de ubicación separada de chat
+  // ── Chat: envía pregunta ────────────────────────────────────
+  protected askBackend(): void {
+    const pregunta = this.prompt.trim();
+    if (!pregunta || this.loading()) return;
+
+    this.messages.update(msgs => [...msgs, { role: 'user', text: pregunta }]);
+    this.prompt = '';
+    this.loading.set(true);
+    this.errorMessage.set('');
+
+    const keywords = ['evento', 'eventos', 'actividad', 'actividades',
+                      'hoy', 'mañana', 'semana', 'qué hay', 'que hay',
+                      'agenda', 'próximos', 'proximos', 'marzo', 'abril',
+                      'disponible', 'campus'];
+    const esEventos = keywords.some(k => pregunta.toLowerCase().includes(k));
+
+    if (esEventos) {
+      this.eventosService.getAllEventos().subscribe({
+        next: (eventos) => {
+          this.http.post<{ message_es: string }>(this.askUrl, {
+            query: pregunta,
+            contexto_eventos: eventos
+          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (data) => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: data.message_es }]);
+              this.loading.set(false);
+            },
+            error: () => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Error al consultar la IA de eventos.' }]);
+              this.loading.set(false);
+            }
+          });
+        },
+        error: () => {
+          // Si falla cargar eventos, usa el RAG normal
+          this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (data) => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
+              this.loading.set(false);
+            },
+            error: () => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor.' }]);
+              this.loading.set(false);
+            }
+          });
+        }
+      });
+    } else {
+      this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (data) => {
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8001/' }]);
+          this.loading.set(false);
+        }
+      });
+    }
+  }
+
+  // ── Búsqueda de Ubicación ────────────────────────────────────
   protected buscarUbicacionBackend(query: string): void {
     if (!query.trim()) return;
     
@@ -212,6 +270,7 @@ export class ModulePage {
     });
   }
 
+  // ── Directorio ─────────────────────────────────────────────
   protected fetchDirectory(): void {
     this.loading.set(true);
     this.errorMessage.set('');
@@ -225,5 +284,41 @@ export class ModulePage {
         this.loading.set(false);
       }
     });
+  }
+
+  // ── Events ─────────────────────────────────────────────────
+  protected cargarEventos(vista: 'hoy' | 'semana' | 'todos'): void {
+    this.vistaActiva.set(vista);
+    this.eventoSeleccionado.set(null);
+    this.eventosLoading.set(true);
+    this.eventosError.set('');
+    this.eventosService.getEventos(vista).subscribe({
+      next: (data) => { this.eventos.set(data); this.eventosLoading.set(false); },
+      error: () => { this.eventosError.set('No se pudo conectar con el servidor.'); this.eventosLoading.set(false); }
+    });
+  }
+
+  protected buscarPorFecha(): void {
+    const fecha = this.fechaBusqueda();
+    if (!fecha) return;
+    this.eventoSeleccionado.set(null);
+    this.eventosLoading.set(true);
+    this.eventosError.set('');
+    this.eventosService.getEventos('hoy', fecha).subscribe({
+      next: (data) => { this.eventos.set(data); this.eventosLoading.set(false); },
+      error: () => { this.eventosError.set('Error al buscar eventos.'); this.eventosLoading.set(false); }
+    });
+  }
+
+  protected verDetalle(evento: Evento): void { this.eventoSeleccionado.set(evento); }
+  protected volverALista(): void             { this.eventoSeleccionado.set(null); }
+  protected esHoy(fecha: string): boolean    { return fecha === this.today; }
+  protected setFechaBusqueda(valor: string)  { this.fechaBusqueda.set(valor); }
+
+  get todayDisplay(): string { return this.formatearFecha(this.today); }
+
+  protected formatearFecha(fecha: string): string {
+    const [y, m, d] = fecha.split('-');
+    return `${d}/${m}/${y}`;
   }
 }
