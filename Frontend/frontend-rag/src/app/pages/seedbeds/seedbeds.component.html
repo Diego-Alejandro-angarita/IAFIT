@@ -1,14 +1,16 @@
-<div class="page-container">
-  <header class="hero-section">
-    <div class="hero-logo-wrapper">
-      <div class="hero-logo">IA</div>
-    </div>
+<header class="module-header">
+  <div class="module-header-inner">
+    <a routerLink="/" class="back-btn" aria-label="Volver">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+      </svg>
+    </a>
+    <h1 class="module-title">Semilleros de Investigación</h1>
+  </div>
+</header>
 
-    <h1 class="hero-title">IAFIT Research Seedbeds</h1>
-    <p class="hero-subtitle">
-      Explore active research seedbeds and discover extracurricular research opportunities at EAFIT.
-    </p>
-  </header>
+<div class="page-container">
 
   <section class="search-card">
     <div class="search-grid">
@@ -34,11 +36,11 @@
 
       <div class="button-group">
         <button (click)="onSearch()" class="btn-primary-custom">
-          🔍 Search
+          Search
         </button>
 
         <button (click)="clearFilters()" class="btn-secondary-custom">
-          ✨ Clear
+          Clear
         </button>
       </div>
     </div>

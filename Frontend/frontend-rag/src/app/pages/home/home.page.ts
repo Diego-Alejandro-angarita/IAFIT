@@ -24,7 +24,7 @@ export class HomePage {
   protected readonly newFeatures: ActionItem[] = [
     { id: 'calendar', title: 'Calendario Académico', colorClass: 'indigo' },
     { id: 'directory', title: 'Directorio', colorClass: 'teal' },
-    { id: 'groups', title: 'Grupos y Semilleros', colorClass: 'pink' },
+    { id: 'seedbeds', title: 'Grupos y Semilleros', colorClass: 'pink' },
   ];
 
   protected readonly frequentQuestions: string[] = [

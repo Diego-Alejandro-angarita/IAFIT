@@ -29,19 +29,19 @@
         <!-- Bot welcome -->
         <div class="msg-row bot">
           <div class="msg-bubble bot-bubble">
-            <p>¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy?</p>
+            <p>¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy? Puedo responder preguntas sobre semilleros de investigación, facultades, tutores y más.</p>
           </div>
         </div>
 
-        @if (response(); as api) {
+        @if (response(); as respuesta) {
           <div class="msg-row user">
             <div class="msg-bubble user-bubble">
               <p>{{ prompt || 'Consulta enviada' }}</p>
             </div>
           </div>
           <div class="msg-row bot">
-            <div class="msg-bubble bot-bubble">
-              <p>{{ api.message_es }}</p>
+            <div class="msg-bubble bot-bubble response-bubble">
+              <pre class="response-text">{{ respuesta }}</pre>
             </div>
           </div>
         }

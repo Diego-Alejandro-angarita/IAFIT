@@ -4,11 +4,10 @@ import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 
-type BackendResponse = {
-  status: string;
-  message_es: string;
-  message_en: string;
-  ui_modules: string[];
+type ChatResponse = {
+  respuesta: string;
+  fuente?: string;
+  error?: string;
 };
 
 type ModuleContent = {
@@ -64,12 +63,12 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/';
+  private readonly apiUrl = 'http://127.0.0.1:8000/api/llamaindex/query/';
 
   protected prompt = '';
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly response = signal<BackendResponse | null>(null);
+  protected readonly response = signal<string | null>(null);
 
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -99,20 +98,25 @@ export class ModulePage {
   }
 
   protected askBackend(): void {
-    if (!this.isChat()) {
+    if (!this.isChat() || !this.prompt.trim()) {
       return;
     }
 
     this.loading.set(true);
     this.errorMessage.set('');
 
-    this.http.get<BackendResponse>(this.apiUrl).pipe(takeUntilDestroyed()).subscribe({
+    this.http.post<ChatResponse>(this.apiUrl, { query: this.prompt.trim() }).subscribe({
       next: (data) => {
-        this.response.set(data);
+        if (data.error) {
+          this.errorMessage.set(data.error);
+        } else {
+          this.response.set(data.respuesta);
+        }
         this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage.set('No se pudo conectar con el backend en http://127.0.0.1:8000/.');
+      error: (err) => {
+        console.error('Error en la consulta:', err);
+        this.errorMessage.set('No se pudo conectar con el asistente. Verifica que el servidor esté activo.');
         this.loading.set(false);
       }
     });
