@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from supabase import create_client
-from sentence_transformers import SentenceTransformer
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -10,11 +10,16 @@ url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_SERVICE_KEY")
 supabase = create_client(url, key)
 
-print("Cargando modelo local...")
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# Configuración Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+print("Usando Gemini API para embeddings...")
 
-def generar_embedding_local(texto):
-    return model.encode(texto).tolist()
+def generar_embedding(texto):
+    result = genai.embed_content(
+        model="models/gemini-embedding-001",
+        content=texto
+    )
+    return result['embedding']
 
 
 # ==========================
@@ -164,7 +169,7 @@ for item in datos_calendario:
 
     print(f"Procesando actividad: {item['actividad']} ({item['periodo']})")
 
-    vector = generar_embedding_local(item["embedding_text"])
+    vector = generar_embedding(item["embedding_text"])
 
     supabase.table("calendario_academico").insert({
         "actividad": item["actividad"],

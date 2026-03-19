@@ -8,7 +8,8 @@
 h1, h2, h3, p { margin: 0; }
 
 .page-root {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: #f9fafb;
   display: flex;
   flex-direction: column;
@@ -184,7 +185,7 @@ h1, h2, h3, p { margin: 0; }
   bottom: 5rem;
   left: 0;
   right: 0;
-  background: rgba(255,255,255,.8);
+  background: #ffffff;
   backdrop-filter: blur(24px);
   border-top: 1px solid rgba(255,255,255,.2);
   box-shadow: 0 -2px 10px rgba(0,0,0,.05);

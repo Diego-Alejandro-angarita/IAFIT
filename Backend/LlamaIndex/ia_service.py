@@ -1,10 +1,10 @@
 import os
 from supabase import create_client
-from sentence_transformers import SentenceTransformer
+import google.generativeai as genai
 
 # Lazy initialization to avoid crashes when env vars are not set
 _supabase = None
-_model = None
+_gemini_configured = False
 
 # Mapeo de palabras clave en la pregunta → actividades que deben priorizarse
 _KEYWORD_BOOST = {
@@ -66,19 +66,28 @@ def _get_supabase():
         _supabase = create_client(url, key)
     return _supabase
 
-def _get_model():
-    global _model
-    if _model is None:
-        print("Inicializando motor de búsqueda semántica...")
-        _model = SentenceTransformer('all-MiniLM-L6-v2')
-    return _model
+def _configure_gemini():
+    global _gemini_configured
+    if not _gemini_configured:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY debe estar configurada en .env")
+        genai.configure(api_key=api_key)
+        _gemini_configured = True
+
+def _generar_embedding(texto):
+    _configure_gemini()
+    result = genai.embed_content(
+        model="models/gemini-embedding-001",
+        content=texto
+    )
+    return result['embedding']
 
 def buscar_ubicacion_semantica(pregunta):
     """
     Recibe la pregunta de Angular, la vectoriza y consulta a Supabase.
     """
-    model = _get_model()
-    vector_pregunta = model.encode(pregunta).tolist()
+    vector_pregunta = _generar_embedding(pregunta)
 
     respuesta = _get_supabase().rpc(
         'buscar_ubicaciones_local',
@@ -109,8 +118,7 @@ def buscar_evento_semantico(pregunta):
     Aplica filtrado por umbral de similitud, boost por keywords y selecciona
     solo los resultados realmente relevantes a la pregunta.
     """
-    model = _get_model()
-    vector_pregunta = model.encode(pregunta).tolist()
+    vector_pregunta = _generar_embedding(pregunta)
 
     respuesta = _get_supabase().rpc(
         'buscar_eventos',

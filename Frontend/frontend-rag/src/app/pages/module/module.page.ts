@@ -1,16 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-
-type BackendResponse = {
-  status: string;
-  message_es: string;
-  message_en: string;
-  ui_modules: string[];
-};
 
 type Ubicacion = {
   codigo_bloque: string;
@@ -37,6 +30,14 @@ type BusquedaResponse = {
 
 type CalendarioResponse = {
   resultados: EventoCalendario[];
+};
+
+type ChatMessage = {
+  role: 'user' | 'bot';
+  text: string;
+  ubicaciones?: Ubicacion[];
+  eventos?: EventoCalendario[];
+  isError?: boolean;
 };
 
 type ModuleContent = {
@@ -89,19 +90,20 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
   templateUrl: './module.page.html',
   styleUrl: './module.page.scss'
 })
-export class ModulePage {
+export class ModulePage implements AfterViewChecked {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
   private readonly apiUrl = 'http://127.0.0.1:8000/api/llamaindex/buscar/';
   private readonly calendarApiUrl = 'http://127.0.0.1:8000/api/llamaindex/calendario/buscar/';
 
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
+  private shouldScroll = false;
+
   protected prompt = '';
-  protected readonly lastQuery = signal('');
   protected readonly loading = signal(false);
-  protected readonly errorMessage = signal('');
-  protected readonly response = signal<BackendResponse | null>(null);
-  protected readonly resultados = signal<Ubicacion[]>([]);
-  protected readonly eventosCalendario = signal<EventoCalendario[]>([]);
+  protected readonly messages = signal<ChatMessage[]>([
+    { role: 'bot', text: '¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy?' }
+  ]);
 
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -118,10 +120,7 @@ export class ModulePage {
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      if (!this.isChat()) {
-        return;
-      }
-
+      if (!this.isChat()) return;
       const query = params.get('q')?.trim();
       if (query) {
         this.prompt = query;
@@ -130,18 +129,30 @@ export class ModulePage {
     });
   }
 
-  protected askBackend(): void {
-    if (!this.isChat() || !this.prompt.trim()) {
-      return;
+  ngAfterViewChecked(): void {
+    if (this.shouldScroll) {
+      this.scrollToBottom();
+      this.shouldScroll = false;
     }
+  }
+
+  private scrollToBottom(): void {
+    const el = this.messagesContainer?.nativeElement;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }
+
+  protected askBackend(): void {
+    if (!this.isChat() || !this.prompt.trim()) return;
 
     const query = this.prompt.trim();
     this.prompt = '';
-    this.lastQuery.set(query);
+
+    // Add user message to history
+    this.messages.update(msgs => [...msgs, { role: 'user', text: query }]);
     this.loading.set(true);
-    this.errorMessage.set('');
-    this.resultados.set([]);
-    this.eventosCalendario.set([]);
+    this.shouldScroll = true;
 
     forkJoin({
       campus: this.http.get<BusquedaResponse>(this.apiUrl, { params: { q: query } }),
@@ -154,18 +165,35 @@ export class ModulePage {
         const bestCampus = campusResults.length ? Math.max(...campusResults.map(r => r.similarity)) : 0;
         const bestCalendar = calendarResults.length ? Math.max(...calendarResults.map(r => r.similitud)) : 0;
 
-        if (bestCalendar >= bestCampus) {
-          this.eventosCalendario.set(calendarResults);
-          this.resultados.set([]);
+        if (bestCalendar >= bestCampus && calendarResults.length) {
+          this.messages.update(msgs => [...msgs, {
+            role: 'bot',
+            text: '📅 Calendario Académico',
+            eventos: calendarResults
+          }]);
+        } else if (campusResults.length) {
+          this.messages.update(msgs => [...msgs, {
+            role: 'bot',
+            text: '',
+            ubicaciones: campusResults
+          }]);
         } else {
-          this.resultados.set(campusResults);
-          this.eventosCalendario.set([]);
+          this.messages.update(msgs => [...msgs, {
+            role: 'bot',
+            text: 'No encontré resultados para tu consulta. Intenta reformular tu pregunta.'
+          }]);
         }
         this.loading.set(false);
+        this.shouldScroll = true;
       },
       error: () => {
-        this.errorMessage.set('No se pudo conectar con el backend.');
+        this.messages.update(msgs => [...msgs, {
+          role: 'bot',
+          text: 'No se pudo conectar con el backend.',
+          isError: true
+        }]);
         this.loading.set(false);
+        this.shouldScroll = true;
       }
     });
   }
