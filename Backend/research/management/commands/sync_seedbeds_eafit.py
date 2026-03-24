@@ -51,10 +51,10 @@ def extract_catalog_entries(html: str):
 
         # intenta encontrar el título del semillero hacia atrás
         title_tag = link.find_previous(["h2", "h3", "h4"])
-        title = clean_text(title_tag.get_text()) if title_tag else "Unnamed Seedbed"
+        title = clean_text(title_tag.get_text()) if title_tag else "Semillero sin nombre"
 
         # intenta encontrar la facultad/escuela hacia atrás
-        faculty = "Unknown"
+        faculty = "Sin facultad"
         previous_text = []
         for prev in link.find_all_previous(limit=10):
             t = clean_text(prev.get_text())
@@ -140,7 +140,7 @@ def extract_description(soup: BeautifulSoup):
         if text and not any(b.lower() in text.lower() for b in BAD_SNIPPETS):
             return text[:1000]
 
-    return "Description not available yet."
+    return "Descripción no disponible aún."
 
 
 def extract_tutor(page_text: str):
@@ -148,7 +148,7 @@ def extract_tutor(page_text: str):
         value = extract_label_value(page_text, label)
         if value:
             return value[:200]
-    return "TBD"
+    return "Por definir"
 
 
 def extract_faculty(page_text: str, fallback_faculty: str):

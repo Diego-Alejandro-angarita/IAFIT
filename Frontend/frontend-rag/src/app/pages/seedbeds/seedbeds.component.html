@@ -15,19 +15,19 @@
   <section class="search-card">
     <div class="search-grid">
       <div class="input-group-custom">
-        <label>Search seedbed</label>
+        <label>Buscar semillero</label>
         <input
           type="text"
           [(ngModel)]="search"
-          placeholder="Type a name or keyword..."
+          placeholder="Escribe un nombre o palabra clave..."
           class="search-input"
         />
       </div>
 
       <div class="input-group-custom">
-        <label>Filter by faculty</label>
+        <label>Filtrar por facultad</label>
         <select [(ngModel)]="selectedFaculty" class="search-select">
-          <option value="">All faculties</option>
+          <option value="">Todas las facultades</option>
           <option *ngFor="let faculty of faculties" [value]="faculty">
             {{ faculty }}
           </option>
@@ -36,31 +36,31 @@
 
       <div class="button-group">
         <button (click)="onSearch()" class="btn-primary-custom">
-          Search
+          Buscar
         </button>
 
         <button (click)="clearFilters()" class="btn-secondary-custom">
-          Clear
+          Limpiar
         </button>
       </div>
     </div>
   </section>
 
   <section class="results-header" *ngIf="seedbeds.length > 0">
-    <h2>Available seedbeds</h2>
-    <span class="results-count">{{ seedbeds.length }} results</span>
+    <h2>Semilleros disponibles</h2>
+    <span class="results-count">{{ seedbeds.length }} resultados</span>
   </section>
 
   <section *ngIf="seedbeds.length > 0" class="cards-grid">
     <article *ngFor="let s of seedbeds" class="seedbed-card">
       <div class="card-top">
-        <span class="status-badge">Active</span>
+        <span class="status-badge">Activo</span>
       </div>
 
       <h3 class="card-title">{{ s.name }}</h3>
 
       <div class="meta-row">
-          <span class="meta-label">Faculty</span>
+          <span class="meta-label">Facultad</span>
           <span
           class="faculty-pill"
           [style.background]="getFacultyColor(s.faculty)"
@@ -71,15 +71,15 @@
 
       <div class="meta-row">
         <span class="meta-label">Tutor</span>
-        <span class="meta-value">{{ s.tutor }}</span>
+        <span class="meta-value">{{ s.tutor === 'TBD' ? 'Por definir' : s.tutor }}</span>
       </div>
 
       <div class="description-box">
         <p>
           {{
-            s.description && s.description !== 'Description not available yet.'
+            s.description && s.description !== 'Description not available yet.' && s.description !== 'Descripción no disponible aún.'
               ? (s.description | slice:0:180) + (s.description.length > 180 ? '...' : '')
-              : 'Description not available yet.'
+              : 'Descripción no disponible aún.'
           }}
         </p>
       </div>
@@ -95,7 +95,7 @@
           target="_blank"
           class="btn-ghost"
         >
-          Official source
+          Fuente oficial
         </a>
       </div>
     </article>
@@ -103,10 +103,10 @@
 
   <section *ngIf="seedbeds.length === 0" class="empty-state-card">
     <div class="empty-icon">🔎</div>
-    <h3>No research seedbeds match your search.</h3>
-    <p>Try another keyword or clear the filters to see all active seedbeds.</p>
+    <h3>No hay semilleros que coincidan con tu búsqueda.</h3>
+    <p>Prueba otra palabra clave o limpia los filtros para ver todos los semilleros activos.</p>
     <button (click)="clearFilters()" class="btn-secondary-custom">
-      Clear filters
+      Limpiar filtros
     </button>
   </section>
 </div>

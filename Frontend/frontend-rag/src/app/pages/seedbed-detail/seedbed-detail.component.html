@@ -1,18 +1,18 @@
 <div class="detail-page">
 
   <div *ngIf="loading" class="detail-card">
-    <p>Loading seedbed information...</p>
+    <p>Cargando información del semillero...</p>
   </div>
 
   <div *ngIf="!loading && errorMessage" class="detail-card">
-    <a routerLink="/seedbeds" class="back-link">← Back to seedbeds</a>
+    <a routerLink="/seedbeds" class="back-link">← Volver a semilleros</a>
     <h2>Error</h2>
     <p>{{ errorMessage }}</p>
   </div>
 
   <div class="detail-card" *ngIf="!loading && seedbed">
     <div class="detail-header">
-      <a routerLink="/seedbeds" class="back-link">← Back to seedbeds</a>
+      <a routerLink="/seedbeds" class="back-link">← Volver a semilleros</a>
     </div>
 
     <div class="detail-top">
@@ -21,26 +21,26 @@
         <div>
           <h1>{{ seedbed.name }}</h1>
           <p class="detail-subtitle">
-            Detailed information about this active research seedbed.
+            Información detallada sobre este semillero de investigación activo.
           </p>
         </div>
       </div>
 
-      <span class="status-badge">Active</span>
+      <span class="status-badge">Activo</span>
     </div>
 
     <div class="info-pills">
       <span class="info-pill">{{ seedbed.faculty }}</span>
-      <span class="info-pill">Tutor: {{ seedbed.tutor }}</span>
+      <span class="info-pill">Tutor: {{ seedbed.tutor === 'TBD' ? 'Por definir' : seedbed.tutor }}</span>
     </div>
 
     <div class="content-section">
-      <h3>Description</h3>
+      <h3>Descripción</h3>
       <p>
         {{
-          seedbed.description && seedbed.description !== 'Description not available yet.'
+          seedbed.description && seedbed.description !== 'Description not available yet.' && seedbed.description !== 'Descripción no disponible aún.'
             ? seedbed.description
-            : 'Description not available yet.'
+            : 'Descripción no disponible aún.'
         }}
       </p>
     </div>
@@ -52,11 +52,11 @@
         target="_blank"
         class="btn-primary-custom"
       >
-        Visit official EAFIT source
+        Visitar fuente oficial de EAFIT
       </a>
 
       <a routerLink="/seedbeds" class="btn-secondary-custom">
-        Return to list
+        Volver al listado
       </a>
     </div>
   </div>

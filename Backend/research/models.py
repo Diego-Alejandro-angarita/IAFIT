@@ -9,8 +9,8 @@ class Seedbed(models.Model):
 
     name = models.CharField(max_length=200)
     faculty = models.CharField(max_length=200)
-    tutor = models.CharField(max_length=200, blank=True, default="TBD")
-    description = models.TextField(blank=True, default="Description not available yet.")
+    tutor = models.CharField(max_length=200, blank=True, default="Por definir")
+    description = models.TextField(blank=True, default="Descripción no disponible aún.")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ACTIVE")
     source_url = models.URLField(blank=True, null=True)
 
