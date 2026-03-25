@@ -1,29 +1,13 @@
-// src/app/pages/module/module.page.ts
-
-import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, DestroyRef, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { EventosService, Evento } from '../../services/eventos.service';
 
 export type RAGResponse = {
   respuesta: string;
-};
-
-export type ChatMessage = {
-  role: 'user' | 'bot';
-  text: string;
-};
-
-export type BackendResponse = {
-  respuesta?: string;
-  error?: string;
-};
-
-export type Professor = {
-  nombre: string;
-  titulos: string;
 };
 
 export type Ubicacion = {
@@ -34,8 +18,41 @@ export type Ubicacion = {
   similarity: number;
 };
 
+export type EventoCalendario = {
+  id: string;
+  actividad: string;
+  descripcion: string;
+  dirigido_a: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  periodo: string;
+  similitud: number;
+};
+
 export type BusquedaResponse = {
   resultados: Ubicacion[];
+};
+
+export type CalendarioResponse = {
+  resultados: EventoCalendario[];
+};
+
+export type ChatMessage = {
+  role: 'user' | 'bot';
+  text: string;
+  ubicaciones?: Ubicacion[];
+  eventos?: EventoCalendario[];
+  isError?: boolean;
+};
+
+export type BackendResponse = {
+  respuesta?: string;
+  error?: string;
+};
+
+export type Professor = {
+  nombre: string;
+  titulos: string;
 };
 
 export type ModuleContent = {
@@ -61,7 +78,7 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
   templateUrl: './module.page.html',
   styleUrl: './module.page.scss'
 })
-export class ModulePage implements OnInit {
+export class ModulePage implements OnInit, AfterViewChecked {
   private readonly route          = inject(ActivatedRoute);
   private readonly http           = inject(HttpClient);
   private readonly eventosService = inject(EventosService);
@@ -71,6 +88,10 @@ export class ModulePage implements OnInit {
   private readonly askUrl         = 'http://127.0.0.1:8001/api/ask/';
   private readonly apiUrl         = 'http://127.0.0.1:8001/api/llamaindex/';
   private readonly apiUrlBuscar   = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
+  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/llamaindex/calendario/buscar/';
+
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
+  private shouldScroll = false;
 
   // ── Chat ──────────────────────────────────────────────────
   protected prompt                = '';
@@ -79,7 +100,7 @@ export class ModulePage implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly response     = signal<BackendResponse | null>(null);
   protected readonly messages     = signal<ChatMessage[]>([
-    { role: 'bot', text: '¡Hola! Soy el Asistente Virtual IAFIT. Puedes preguntarme sobre eventos, servicios o cualquier información del campus.' }
+    { role: 'bot', text: '¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy?' }
   ]);
   
   // ── Directory & Search ────────────────────────────────────
@@ -186,65 +207,121 @@ export class ModulePage implements OnInit {
     }
   }
 
+  ngAfterViewChecked(): void {
+    if (this.shouldScroll) {
+      this.scrollToBottom();
+      this.shouldScroll = false;
+    }
+  }
+
+  private scrollToBottom(): void {
+    const el = this.messagesContainer?.nativeElement;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }
+
   // ── Chat: envía pregunta ────────────────────────────────────
   protected askBackend(): void {
-    const pregunta = this.prompt.trim();
-    if (!pregunta || this.loading()) return;
+    if (!this.isChat() || !this.prompt.trim() || this.loading()) return;
 
-    this.messages.update(msgs => [...msgs, { role: 'user', text: pregunta }]);
+    const query = this.prompt.trim();
     this.prompt = '';
-    this.loading.set(true);
-    this.errorMessage.set('');
 
+    // Add user message to history
+    this.messages.update(msgs => [...msgs, { role: 'user', text: query }]);
+    this.loading.set(true);
+    this.shouldScroll = true;
+
+    // Detect if we should use event/calendar endpoints or generic RAG
     const keywords = ['evento', 'eventos', 'actividad', 'actividades',
                       'hoy', 'mañana', 'semana', 'qué hay', 'que hay',
                       'agenda', 'próximos', 'proximos', 'marzo', 'abril',
-                      'disponible', 'campus'];
-    const esEventos = keywords.some(k => pregunta.toLowerCase().includes(k));
+                      'disponible', 'campus', 'calendario', 'lugar', 'piso', 'bloque'];
+    const lowerQuery = query.toLowerCase();
+    const isSearchContext = keywords.some(k => lowerQuery.includes(k));
 
-    if (esEventos) {
-      this.eventosService.getAllEventos().subscribe({
-        next: (eventos) => {
-          this.http.post<{ message_es: string }>(this.askUrl, {
-            query: pregunta,
-            contexto_eventos: eventos
-          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: (data) => {
-              this.messages.update(msgs => [...msgs, { role: 'bot', text: data.message_es }]);
-              this.loading.set(false);
-            },
-            error: () => {
-              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Error al consultar la IA de eventos.' }]);
-              this.loading.set(false);
-            }
-          });
+    if (isSearchContext) {
+      forkJoin({
+        campus: this.http.get<BusquedaResponse>(this.apiUrlBuscar, { params: { q: query } }),
+        calendario: this.http.get<CalendarioResponse>(this.calendarApiUrl, { params: { q: query } })
+      }).subscribe({
+        next: ({ campus, calendario }) => {
+          const campusResults = campus.resultados ?? [];
+          const calendarResults = calendario.resultados ?? [];
+
+          const bestCampus = campusResults.length ? Math.max(...campusResults.map(r => r.similarity)) : 0;
+          const bestCalendar = calendarResults.length ? Math.max(...calendarResults.map(r => r.similitud)) : 0;
+
+          if (bestCalendar >= bestCampus && calendarResults.length) {
+            this.messages.update(msgs => [...msgs, {
+              role: 'bot',
+              text: '📅 Calendario Académico',
+              eventos: calendarResults
+            }]);
+            this.loading.set(false);
+            this.shouldScroll = true;
+          } else if (campusResults.length) {
+            this.messages.update(msgs => [...msgs, {
+              role: 'bot',
+              text: '',
+              ubicaciones: campusResults
+            }]);
+            this.loading.set(false);
+            this.shouldScroll = true;
+          } else {
+            // Context not found in vectors, fallback to askUrl with agenda context
+            this.fetchAgendaAndAsk(query);
+          }
         },
         error: () => {
-          // Si falla cargar eventos, usa el RAG normal
-          this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: (data) => {
-              this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
-              this.loading.set(false);
-            },
-            error: () => {
-              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor.' }]);
-              this.loading.set(false);
-            }
-          });
+          this.fetchAgendaAndAsk(query);
         }
       });
     } else {
-      this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (data) => {
-          this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8001/' }]);
-          this.loading.set(false);
-        }
-      });
+      this.fallbackToRag(query);
     }
+  }
+
+  private fetchAgendaAndAsk(query: string): void {
+    this.eventosService.getAllEventos().subscribe({
+      next: (eventos) => {
+        this.http.post<{ message_es: string }>(this.askUrl, {
+          query: query,
+          contexto_eventos: eventos
+        }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: (data) => {
+            this.messages.update(msgs => [...msgs, { role: 'bot', text: data.message_es }]);
+            this.loading.set(false);
+            this.shouldScroll = true;
+          },
+          error: () => {
+            this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Error al consultar la IA de eventos.', isError: true }]);
+            this.loading.set(false);
+            this.shouldScroll = true;
+          }
+        });
+      },
+      error: () => {
+        // Fallback to minimal RAG
+        this.fallbackToRag(query);
+      }
+    });
+  }
+
+  private fallbackToRag(query: string): void {
+    this.http.post<RAGResponse>(this.ragUrl, { query: query }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (data) => {
+        this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
+        this.loading.set(false);
+        this.shouldScroll = true;
+      },
+      error: () => {
+        this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo.', isError: true }]);
+        this.loading.set(false);
+        this.shouldScroll = true;
+      }
+    });
   }
 
   // ── Búsqueda de Ubicación ────────────────────────────────────
@@ -262,10 +339,12 @@ export class ModulePage implements OnInit {
       next: (data) => {
         this.resultados.set(data.resultados ?? []);
         this.loading.set(false);
+        this.shouldScroll = true;
       },
       error: () => {
         this.errorMessage.set('No se pudo conectar con el backend para buscar ubicación.');
         this.loading.set(false);
+        this.shouldScroll = true;
       }
     });
   }

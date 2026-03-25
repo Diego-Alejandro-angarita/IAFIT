@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { HomePage } from './pages/home/home.page';
 import { ModulePage } from './pages/module/module.page';
 import { MapPage } from './pages/map/map.page';
+import { CalendarPage } from './pages/calendar/calendar.page';
 
 export const routes: Routes = [
 	{
@@ -29,8 +30,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'calendar',
-		component: ModulePage,
-		data: { moduleKey: 'calendar' }
+		component: CalendarPage
 	},
 	{
 		path: 'directory',

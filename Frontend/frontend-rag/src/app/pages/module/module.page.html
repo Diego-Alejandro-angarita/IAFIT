@@ -40,10 +40,55 @@
     <div class="chat-messages">
       <div class="chat-messages-inner">
         @for (msg of messages(); track $index) {
-          <div class="msg-row" [class.user]="msg.role==='user'" [class.bot]="msg.role==='bot'">
-            <div class="msg-bubble" [class.user-bubble]="msg.role==='user'" [class.bot-bubble]="msg.role==='bot'">
-              <p>{{ msg.text }}</p>
+          @if (msg.role === 'user') {
+            <div class="msg-row user">
+              <div class="msg-bubble user-bubble">
+                <p>{{ msg.text }}</p>
+              </div>
             </div>
+          } @else {
+            <!-- Bot message -->
+            @if (msg.isError) {
+              <div class="msg-row bot">
+                <div class="msg-bubble bot-bubble error-bubble">
+                  <p>{{ msg.text }}</p>
+                </div>
+              </div>
+            } @else if (msg.eventos?.length) {
+              <div class="msg-row bot">
+                <div class="msg-bubble bot-bubble">
+                  <p><strong>{{ msg.text }}</strong></p>
+                </div>
+              </div>
+              @for (ev of msg.eventos; track ev.id) {
+                <div class="msg-row bot">
+                  <div class="msg-bubble bot-bubble calendar-bubble">
+                    <p class="cal-actividad"><strong>{{ ev.actividad }}</strong></p>
+                    <p class="cal-desc">{{ ev.descripcion }}</p>
+                    <div class="cal-meta">
+                      <span>📆 {{ ev.fecha_inicio }} — {{ ev.fecha_fin }}</span>
+                      <span>👥 {{ ev.dirigido_a }}</span>
+                      <span>📚 Periodo {{ ev.periodo }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else if (msg.ubicaciones?.length) {
+              @for (r of msg.ubicaciones; track r.codigo_bloque + '-' + r.piso) {
+                <div class="msg-row bot">
+                  <div class="msg-bubble bot-bubble">
+                    <p><strong>Bloque {{ r.codigo_bloque }} — Piso {{ r.piso }}</strong></p>
+                    <p>{{ r.descripcion_semantica }}</p>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="msg-row bot">
+                <div class="msg-bubble bot-bubble">
+                  <p>{{ msg.text }}</p>
+                </div>
+              </div>
+            }
           }
         }
         @if (loading()) {

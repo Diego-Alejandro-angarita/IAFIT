@@ -3,9 +3,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = 'django-insecure-gnk!_b539-)ojl8or6tuo*)-f@bev^buzosr6o9zil2st^$0$f'
 

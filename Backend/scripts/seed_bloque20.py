@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from supabase import create_client
-from sentence_transformers import SentenceTransformer
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -10,13 +10,16 @@ url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_SERVICE_KEY")
 supabase = create_client(url, key)
 
-# CARGAR EL MODELO LOCAL (Se descarga solo la primera vez)
-print("Cargando modelo local...")
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# Configuración Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+print("Usando Gemini API para embeddings...")
 
-def generar_embedding_local(texto):
-    # Genera el vector usando tu CPU
-    return model.encode(texto).tolist()
+def generar_embedding(texto):
+    result = genai.embed_content(
+        model="models/gemini-embedding-001",
+        content=texto
+    )
+    return result['embedding']
 
 # Datos del Bloque 20
 datos_bloque_20 = [
@@ -42,7 +45,7 @@ datos_bloque_20 = [
 
 for item in datos_bloque_20:
     print(f"Procesando piso {item['piso']}...")
-    vector = generar_embedding_local(item['descripcion'])
+    vector = generar_embedding(item['descripcion'])
     
     supabase.table("ubicaciones_campus").insert({
         "codigo_bloque": item['codigo_bloque'],

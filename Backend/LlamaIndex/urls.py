@@ -11,4 +11,7 @@ urlpatterns = [
     path('api/ask/', views.ask_about_events, name='ask_events'),
     path('buscar/', views.buscar_campus, name='buscar_campus'),
     path('directorio/', views.get_directory, name='get_directory'),
+    path('buscar/', views.buscar_campus, name='buscar_campus'),
+    path('calendario/', views.calendario, name='calendario'),
+    path('calendario/buscar/', views.buscar_calendario, name='buscar_calendario'),
 ]
