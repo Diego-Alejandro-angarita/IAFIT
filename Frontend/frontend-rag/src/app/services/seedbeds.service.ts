@@ -7,7 +7,7 @@ import { Seedbed } from '../models/seedbed.model';
   providedIn: 'root'
 })
 export class SeedbedsService {
-  private apiUrl = 'http://127.0.0.1:8000/api/seedbeds/';
+  private apiUrl = 'http://127.0.0.1:8001/api/seedbeds/';
 
   constructor(private http: HttpClient) {}
 
