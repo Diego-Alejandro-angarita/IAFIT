@@ -1,0 +1,25 @@
+[33mÔØ»[39m Building...
+[32mÔ£ö[39m Building...
+[35mPrerendered 0 static routes.[39m
+Application bundle generation failed. [9.839 seconds] - 2026-03-25T15:33:12.172Z
+
+X [ERROR] TS2304: Cannot find name 'ViewChild'. [plugin angular-compiler]
+
+    src/app/pages/module/module.page.ts:82:3:
+      82 Ôöé   @ViewChild('messagesContainer') private messagesContainer!: Elem...
+         ÔòÁ    ~~~~~~~~~
+
+
+X [ERROR] TS2552: Cannot find name 'ElementRef'. Did you mean 'Element'? [plugin angular-compiler]
+
+    src/app/pages/module/module.page.ts:82:62:
+      82 Ôöé ...ontainer') private messagesContainer!: ElementRef<HTMLDivElement>;
+         ÔòÁ                                           ~~~~~~~~~~
+
+  'Element' is declared here.
+
+    node_modules/typescript/lib/lib.dom.d.ts:11110:12:
+      11110 Ôöé declare var Element: {
+            ÔòÁ             ~~~~~~~
+
+

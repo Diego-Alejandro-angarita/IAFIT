@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -76,8 +76,8 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
-  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/llamaindex/calendario/buscar/';
+  private readonly apiUrl = 'http://127.0.0.1:8001/api/buscar/';
+  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/calendario/buscar/';
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   private shouldScroll = false;

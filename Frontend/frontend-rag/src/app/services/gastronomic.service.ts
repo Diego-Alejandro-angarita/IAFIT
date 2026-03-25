@@ -9,16 +9,21 @@ export class GastronomicService {
   private apiUrl: string;
 
   constructor(private http: HttpClient) {
-    // Usar URL relativa o determinar dinámicamente
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      // Desarrollo local - usar 8000
-      this.apiUrl = 'http://127.0.0.1:8000/api';
+    // Verificar si estamos en el navegador o en SSR
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol;
+      
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        // Desarrollo local - usar 8001
+        this.apiUrl = 'http://127.0.0.1:8001/api';
+      } else {
+        // Otros ambientes - usar mismo puerto
+        this.apiUrl = `${protocol}//${hostname}:8001/api`;
+      }
     } else {
-      // Otros ambientes - usar mismo puerto
-      this.apiUrl = `${protocol}//${hostname}:8000/api`;
+      // SSR fallback
+      this.apiUrl = 'http://127.0.0.1:8001/api';
     }
     
     console.log('API URL configurada:', this.apiUrl);
