@@ -37,7 +37,7 @@
         </div>
       </div>
     </header>
-    <div class="chat-messages">
+    <div class="chat-messages" #messagesContainer>
       <div class="chat-messages-inner">
         @for (msg of messages(); track $index) {
           @if (msg.role === 'user') {

@@ -78,95 +78,16 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
   templateUrl: './module.page.html',
   styleUrl: './module.page.scss'
 })
-export class ModulePage implements OnInit, AfterViewChecked {
-  private readonly route          = inject(ActivatedRoute);
-  private readonly http           = inject(HttpClient);
-  private readonly eventosService = inject(EventosService);
-  private readonly destroyRef     = inject(DestroyRef);
+export class ModulePage {
+  private readonly route = inject(ActivatedRoute);
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = 'http://127.0.0.1:8000/';
 
-  private readonly ragUrl         = 'http://127.0.0.1:8001/api/query';
-  private readonly askUrl         = 'http://127.0.0.1:8001/api/ask/';
-  private readonly apiUrl         = 'http://127.0.0.1:8001/api/llamaindex/';
-  private readonly apiUrlBuscar   = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
-  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/llamaindex/calendario/buscar/';
-
-  @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
-  private shouldScroll = false;
-
-  // ── Chat ──────────────────────────────────────────────────
-  protected prompt                = '';
-  protected readonly lastQuery    = signal('');
-  protected readonly loading      = signal(false);
+  protected prompt = '';
+  protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly response     = signal<BackendResponse | null>(null);
-  protected readonly messages     = signal<ChatMessage[]>([
-    { role: 'bot', text: '¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy?' }
-  ]);
-  
-  // ── Directory & Search ────────────────────────────────────
-  protected readonly chatHistory  = signal<{ role: 'user' | 'bot'; text: string }[]>([]);
-  protected readonly professorsList = signal<Professor[]>([]);
-  protected readonly resultados   = signal<Ubicacion[]>([]);
-  
-  protected readonly searchQuery  = signal('');
-  protected readonly selectedFilter = signal('');
+  protected readonly response = signal<BackendResponse | null>(null);
 
-  protected readonly availableFilters = computed(() => {
-    const list = this.professorsList();
-    const categories = new Set<string>();
-    
-    for (const prof of list) {
-        const match = prof.titulos.match(/\(([^)]+)\)$/);
-        if (match && match[1]) {
-            const cats = match[1].split('/').map(c => c.trim());
-            cats.forEach(c => categories.add(c));
-        }
-    }
-    return Array.from(categories).sort();
-  });
-
-  protected readonly filteredProfessors = computed(() => {
-    const query = this.searchQuery().toLowerCase();
-    const filter = this.selectedFilter();
-    
-    return this.professorsList().filter(prof => {
-      const matchesText = prof.nombre.toLowerCase().includes(query) || 
-                          prof.titulos.toLowerCase().includes(query);
-      
-      const matchesFilter = filter ? prof.titulos.includes(filter) : true;
-      
-      return matchesText && matchesFilter;
-    });
-  });
-
-  // ── Events ────────────────────────────────────────────────
-  protected readonly eventos            = signal<Evento[]>([]);
-  protected readonly eventoSeleccionado = signal<Evento | null>(null);
-  protected readonly eventosLoading     = signal(false);
-  protected readonly eventosError       = signal('');
-  protected readonly vistaActiva        = signal<'hoy' | 'semana' | 'todos'>('hoy');
-  protected readonly fechaBusqueda      = signal('');
-
-  // Fecha actual en zona horaria de Colombia
-  protected readonly today = (() => {
-    const now = new Date();
-    const bogota = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
-    const y = bogota.getFullYear();
-    const m = String(bogota.getMonth() + 1).padStart(2, '0');
-    const d = String(bogota.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  })();
-
-  protected readonly eventosPorFecha = computed(() => {
-    const mapa = new Map<string, Evento[]>();
-    for (const e of this.eventos()) {
-      if (!mapa.has(e.event_date)) mapa.set(e.event_date, []);
-      mapa.get(e.event_date)!.push(e);
-    }
-    return Array.from(mapa.entries()).map(([date, events]) => ({ date, events }));
-  });
-
-  // ── Computed flags ─────────────────────────────────────────
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
     return (key && MODULE_CONTENT[key]) || { title: 'Modulo', description: 'Contenido pendiente de configurar.' };
@@ -187,12 +108,11 @@ export class ModulePage implements OnInit, AfterViewChecked {
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      if (this.isChat()) {
-        const query = params.get('q')?.trim();
-        if (query) {
-          this.prompt = query;
-          this.askBackend();
-        }
+      if (!this.isChat()) return;
+      const query = params.get('q')?.trim();
+      if (query) {
+        this.prompt = query;
+        this.askBackend();
       }
     });
 
@@ -207,121 +127,65 @@ export class ModulePage implements OnInit, AfterViewChecked {
     }
   }
 
-  ngAfterViewChecked(): void {
-    if (this.shouldScroll) {
-      this.scrollToBottom();
-      this.shouldScroll = false;
-    }
-  }
-
-  private scrollToBottom(): void {
-    const el = this.messagesContainer?.nativeElement;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
-    }
-  }
-
   // ── Chat: envía pregunta ────────────────────────────────────
   protected askBackend(): void {
-    if (!this.isChat() || !this.prompt.trim() || this.loading()) return;
+    const pregunta = this.prompt.trim();
+    if (!pregunta || this.loading()) return;
 
-    const query = this.prompt.trim();
+    this.messages.update(msgs => [...msgs, { role: 'user', text: pregunta }]);
     this.prompt = '';
-
-    // Add user message to history
-    this.messages.update(msgs => [...msgs, { role: 'user', text: query }]);
     this.loading.set(true);
-    this.shouldScroll = true;
+    this.errorMessage.set('');
 
-    // Detect if we should use event/calendar endpoints or generic RAG
     const keywords = ['evento', 'eventos', 'actividad', 'actividades',
                       'hoy', 'mañana', 'semana', 'qué hay', 'que hay',
                       'agenda', 'próximos', 'proximos', 'marzo', 'abril',
-                      'disponible', 'campus', 'calendario', 'lugar', 'piso', 'bloque'];
-    const lowerQuery = query.toLowerCase();
-    const isSearchContext = keywords.some(k => lowerQuery.includes(k));
+                      'disponible', 'campus'];
+    const esEventos = keywords.some(k => pregunta.toLowerCase().includes(k));
 
-    if (isSearchContext) {
-      forkJoin({
-        campus: this.http.get<BusquedaResponse>(this.apiUrlBuscar, { params: { q: query } }),
-        calendario: this.http.get<CalendarioResponse>(this.calendarApiUrl, { params: { q: query } })
-      }).subscribe({
-        next: ({ campus, calendario }) => {
-          const campusResults = campus.resultados ?? [];
-          const calendarResults = calendario.resultados ?? [];
-
-          const bestCampus = campusResults.length ? Math.max(...campusResults.map(r => r.similarity)) : 0;
-          const bestCalendar = calendarResults.length ? Math.max(...calendarResults.map(r => r.similitud)) : 0;
-
-          if (bestCalendar >= bestCampus && calendarResults.length) {
-            this.messages.update(msgs => [...msgs, {
-              role: 'bot',
-              text: '📅 Calendario Académico',
-              eventos: calendarResults
-            }]);
-            this.loading.set(false);
-            this.shouldScroll = true;
-          } else if (campusResults.length) {
-            this.messages.update(msgs => [...msgs, {
-              role: 'bot',
-              text: '',
-              ubicaciones: campusResults
-            }]);
-            this.loading.set(false);
-            this.shouldScroll = true;
-          } else {
-            // Context not found in vectors, fallback to askUrl with agenda context
-            this.fetchAgendaAndAsk(query);
-          }
+    if (esEventos) {
+      this.eventosService.getAllEventos().subscribe({
+        next: (eventos) => {
+          this.http.post<{ message_es: string }>(this.askUrl, {
+            query: pregunta,
+            contexto_eventos: eventos
+          }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (data) => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: data.message_es }]);
+              this.loading.set(false);
+            },
+            error: () => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Error al consultar la IA de eventos.' }]);
+              this.loading.set(false);
+            }
+          });
         },
         error: () => {
-          this.fetchAgendaAndAsk(query);
+          // Si falla cargar eventos, usa el RAG normal
+          this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (data) => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
+              this.loading.set(false);
+            },
+            error: () => {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor.' }]);
+              this.loading.set(false);
+            }
+          });
         }
       });
     } else {
-      this.fallbackToRag(query);
+      this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (data) => {
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8001/' }]);
+          this.loading.set(false);
+        }
+      });
     }
-  }
-
-  private fetchAgendaAndAsk(query: string): void {
-    this.eventosService.getAllEventos().subscribe({
-      next: (eventos) => {
-        this.http.post<{ message_es: string }>(this.askUrl, {
-          query: query,
-          contexto_eventos: eventos
-        }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: (data) => {
-            this.messages.update(msgs => [...msgs, { role: 'bot', text: data.message_es }]);
-            this.loading.set(false);
-            this.shouldScroll = true;
-          },
-          error: () => {
-            this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Error al consultar la IA de eventos.', isError: true }]);
-            this.loading.set(false);
-            this.shouldScroll = true;
-          }
-        });
-      },
-      error: () => {
-        // Fallback to minimal RAG
-        this.fallbackToRag(query);
-      }
-    });
-  }
-
-  private fallbackToRag(query: string): void {
-    this.http.post<RAGResponse>(this.ragUrl, { query: query }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (data) => {
-        this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
-        this.loading.set(false);
-        this.shouldScroll = true;
-      },
-      error: () => {
-        this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo.', isError: true }]);
-        this.loading.set(false);
-        this.shouldScroll = true;
-      }
-    });
   }
 
   // ── Búsqueda de Ubicación ────────────────────────────────────
@@ -339,12 +203,10 @@ export class ModulePage implements OnInit, AfterViewChecked {
       next: (data) => {
         this.resultados.set(data.resultados ?? []);
         this.loading.set(false);
-        this.shouldScroll = true;
       },
       error: () => {
         this.errorMessage.set('No se pudo conectar con el backend para buscar ubicación.');
         this.loading.set(false);
-        this.shouldScroll = true;
       }
     });
   }
@@ -360,6 +222,11 @@ export class ModulePage implements OnInit, AfterViewChecked {
       },
       error: () => {
         this.errorMessage.set('No se pudo cargar el directorio de profesores.');
+        this.messages.update(msgs => [...msgs, {
+          role: 'bot',
+          text: 'No se pudo conectar con el backend.',
+          isError: true
+        }]);
         this.loading.set(false);
       }
     });
