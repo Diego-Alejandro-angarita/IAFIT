@@ -76,7 +76,11 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/llamaindex/buscar/';
+  private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
+  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/llamaindex/calendario/buscar/';
+
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
+  private shouldScroll = false;
 
   protected prompt = '';
   protected readonly lastQuery = signal('');
