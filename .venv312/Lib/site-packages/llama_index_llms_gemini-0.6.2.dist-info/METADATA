@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: llama-index-llms-gemini
+Version: 0.6.2
+Summary: llama-index llms gemini integration
+Author-email: Your Name <you@example.com>
+License-Expression: MIT
+License-File: LICENSE
+Requires-Python: <4.0,>=3.9
+Requires-Dist: google-generativeai>=0.5.2
+Requires-Dist: llama-index-core<0.15,>=0.13.0
+Requires-Dist: pillow<11,>=10.2.0
+Description-Content-Type: text/markdown
+
+# LlamaIndex Llms Integration: Gemini
+
+As of version `0.6.2`, this integration is no longer supported, and has been replaced by `llama-index-llms-google-genai`. Visit the [Google GenAI page](https://docs.llamaindex.ai/en/stable/examples/llm/google_genai/) for the latest examples and documentation.

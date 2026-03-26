@@ -44,3 +44,4 @@ __screenshots__/
 Thumbs.db
 
 .env
+.venv312/
