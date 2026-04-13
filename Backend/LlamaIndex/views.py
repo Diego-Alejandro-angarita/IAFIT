@@ -28,8 +28,14 @@ def query_llama_index(request):
         try:
             data = json.loads(request.body)
             query = data.get('query')
+            contexto = data.get('contexto', '')
+            
             if not query:
                 return JsonResponse({'error': 'El campo "query" es requerido.'}, status=400)
+                
+            if contexto:
+                query = f"Información adicional sobre ubicaciones o calendario encontrada en una base de datos externa:\n{contexto}\n\nAplica este contexto si la pregunta es relevante a un bloque o calendario.\nPregunta del usuario: {query}"
+                
             respuesta = consultar_rag(query)
             return JsonResponse({'respuesta': respuesta}, status=200)
         except json.JSONDecodeError:
@@ -157,9 +163,7 @@ def event_list_api(request):
             event_date__lte=domingo
         ).order_by('event_date', 'event_time')
     elif vista == 'todos':
-        eventos = Event.objects.filter(
-            event_date__gte=today
-        ).order_by('event_date', 'event_time')
+        eventos = Event.objects.all().order_by('event_date', 'event_time')
     else:  # hoy
         eventos = Event.objects.filter(event_date=today).order_by('event_time')
 

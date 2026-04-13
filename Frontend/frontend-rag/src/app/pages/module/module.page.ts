@@ -81,12 +81,40 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/';
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly eventosService = inject(EventosService);
+
+  private readonly apiUrl = 'http://127.0.0.1:8001/';
+  private readonly askUrl = 'http://127.0.0.1:8001/api/ask/';
+  private readonly ragUrl = 'http://127.0.0.1:8001/api/query/';
+  private readonly apiUrlBuscar = 'http://127.0.0.1:8001/buscar/';
 
   protected prompt = '';
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly response = signal<BackendResponse | null>(null);
+
+  // Chat state
+  protected readonly messages = signal<ChatMessage[]>([]);
+
+  // Directory state
+  protected readonly professorsList = signal<Professor[]>([]);
+  protected readonly searchQuery = signal('');
+  protected readonly selectedFilter = signal('');
+
+  // Location/Map state
+  protected readonly lastQuery = signal('');
+  protected readonly resultados = signal<Ubicacion[]>([]);
+
+  // Events state
+  protected readonly vistaActiva = signal<'hoy' | 'semana' | 'todos'>('hoy');
+  protected readonly eventoSeleccionado = signal<Evento | null>(null);
+  protected readonly eventosLoading = signal(false);
+  protected readonly eventosError = signal('');
+  protected readonly eventos = signal<Evento[]>([]);
+  protected readonly fechaBusqueda = signal('');
+  
+  protected readonly today = new Date().toISOString().split('T')[0];
 
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -104,6 +132,41 @@ export class ModulePage {
   protected readonly isDirectory = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
     return key === 'directory';
+  });
+
+  protected readonly availableFilters = computed(() => {
+    const list = this.professorsList();
+    const domains = list.map(p => {
+      const match = p.titulos.match(/\(([^)]+)\)$/);
+      return match ? match[1].trim() : '';
+    }).filter(d => Boolean(d));
+    return Array.from(new Set(domains)).sort();
+  });
+
+  protected readonly filteredProfessors = computed(() => {
+    let list = this.professorsList();
+    const query = this.searchQuery().toLowerCase().trim();
+    if (query) {
+      list = list.filter(p => p.nombre.toLowerCase().includes(query) || p.titulos.toLowerCase().includes(query));
+    }
+    const filter = this.selectedFilter();
+    if (filter) {
+      list = list.filter(p => p.titulos.includes(`(${filter})`));
+    }
+    return list;
+  });
+
+  protected readonly eventosPorFecha = computed(() => {
+    const evs = this.eventos();
+    const grouped = evs.reduce((acc, ev) => {
+      if (!acc[ev.event_date]) acc[ev.event_date] = [];
+      acc[ev.event_date].push(ev);
+      return acc;
+    }, {} as Record<string, Evento[]>);
+    return Object.keys(grouped).sort().map(date => ({
+      date,
+      events: grouped[date]
+    }));
   });
 
   constructor() {
@@ -137,11 +200,16 @@ export class ModulePage {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const keywords = ['evento', 'eventos', 'actividad', 'actividades',
-                      'hoy', 'mañana', 'semana', 'qué hay', 'que hay',
-                      'agenda', 'próximos', 'proximos', 'marzo', 'abril',
-                      'disponible', 'campus'];
-    const esEventos = keywords.some(k => pregunta.toLowerCase().includes(k));
+    const queryLower = pregunta.toLowerCase();
+    
+    // Categorías de palabras clave
+    const kwEventos = ['evento', 'eventos', 'actividad', 'actividades', 'agenda', 'conferencia', 'taller'];
+    const kwUbicacion = ['bloque', 'piso', 'aula', 'dónde', 'donde', 'ubicacion', 'ubicación', 'llegar', 'campus', 'restaurante'];
+    const kwCalendario = ['calendario', 'parcial', 'parciales', 'clase', 'clases', 'matrícula', 'matricula', 'semestre', 'requisito'];
+
+    const esEventos = kwEventos.some(k => queryLower.includes(k));
+    const esUbicacion = kwUbicacion.some(k => queryLower.includes(k));
+    const esCalendario = kwCalendario.some(k => queryLower.includes(k));
 
     if (esEventos) {
       this.eventosService.getAllEventos().subscribe({
@@ -160,32 +228,44 @@ export class ModulePage {
             }
           });
         },
-        error: () => {
-          // Si falla cargar eventos, usa el RAG normal
-          this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: (data) => {
-              this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
-              this.loading.set(false);
-            },
-            error: () => {
-              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor.' }]);
-              this.loading.set(false);
-            }
-          });
-        }
+        error: () => this.fallBackToRag(pregunta)
       });
+    } else if (esUbicacion) {
+      this.http.get<BusquedaResponse>(this.apiUrlBuscar, { params: { q: pregunta } })
+        .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: (data) => {
+            const contexto = JSON.stringify(data.resultados);
+            this.fallBackToRag(pregunta, contexto);
+          },
+          error: () => this.fallBackToRag(pregunta)
+        });
+    } else if (esCalendario) {
+      this.http.get<CalendarioResponse>('http://127.0.0.1:8001/calendario/buscar/', { params: { q: pregunta } })
+        .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: (data) => {
+            const contexto = JSON.stringify(data.resultados);
+            this.fallBackToRag(pregunta, contexto);
+          },
+          error: () => this.fallBackToRag(pregunta)
+        });
     } else {
-      this.http.post<RAGResponse>(this.ragUrl, { query: pregunta }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      // Pregunta general o de profesores
+      this.fallBackToRag(pregunta);
+    }
+  }
+
+  private fallBackToRag(pregunta: string, contexto: string = ''): void {
+    this.http.post<RAGResponse>(this.ragUrl, { query: pregunta, contexto: contexto })
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.messages.update(msgs => [...msgs, { role: 'bot', text: data.respuesta }]);
           this.loading.set(false);
         },
         error: () => {
-          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8001/' }]);
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No pude conectarme con el servidor. Verifica que el backend esté corriendo.' }]);
           this.loading.set(false);
         }
       });
-    }
   }
 
   // ── Búsqueda de Ubicación ────────────────────────────────────

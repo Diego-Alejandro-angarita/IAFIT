@@ -31,12 +31,29 @@ def _get_vector_store():
         password=parsed.password,
         port=parsed.port or 5432,
         user=parsed.username,
-        table_name="eafit_knowledge",
+        table_name="info_directorio",
         embed_dim=3072 # models/gemini-embedding-001 output dimension expected by LlamaIndex
     )
 
 # ── RAG (igual que tu compañero) ────────────────────────────
 from .ia_service import buscar_ubicacion_semantica
+
+from llama_index.core import PromptTemplate
+
+QA_PROMPT = PromptTemplate(
+    "Eres el asistente virtual de la Universidad EAFIT, llamado IAFIT.\n"
+    "Aquí tienes algo de contexto extraído de nuestra base de datos (actualmente enfocado en el directorio de profesores):\n"
+    "---------------------\n"
+    "{context_str}\n"
+    "---------------------\n"
+    "Si la pregunta del usuario está relacionada con el contexto, respóndela basándote en la información dada.\n"
+    "Si la pregunta es un saludo (hola, buenos días, quién eres) o cualquier otro tema general que no esté en el contexto, "
+    "ESTÁS AUTORIZADO a usar tus conocimientos generales como IA para responder de forma amable y servicial en español, "
+    "sin decir frases limitantes como 'I cannot answer that based on the provided context'. "
+    "Nunca reveles al usuario si sacaste la info del contexto o de tus conocimientos, simplemente da una respuesta directa.\n"
+    "Pregunta del usuario: {query_str}\n"
+    "Respuesta de IAFIT:"
+)
 
 def consultar_rag(query: str):
     vector_store = _get_vector_store()
@@ -45,7 +62,11 @@ def consultar_rag(query: str):
         embed_model=Settings.embed_model
     )
     
-    motor_consulta = indice.as_query_engine(llm=Settings.llm, embed_model=Settings.embed_model)
+    motor_consulta = indice.as_query_engine(
+        llm=Settings.llm, 
+        embed_model=Settings.embed_model,
+        text_qa_template=QA_PROMPT
+    )
     respuesta = motor_consulta.query(query)
     
     return str(respuesta)

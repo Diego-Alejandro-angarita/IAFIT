@@ -11,4 +11,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: #f9fafb;
+  /* Espacio para el dock-nav flotante: ~80px barra + 16px offset + 8px holgura */
+  padding-bottom: 104px;
 }
