@@ -19,8 +19,27 @@ type Ubicacion = {
   similarity: number;
 };
 
+type Establishment = {
+  id: number;
+  name: string;
+  establishment_type_display: string;
+  location: string;
+  current_status: {
+    status: string;
+    message: string;
+  };
+};
+
 type BusquedaResponse = {
   resultados: Ubicacion[];
+};
+
+export type ChatMessage = {
+  role: 'user' | 'bot';
+  text: string;
+  ubicaciones?: Ubicacion[];
+  restaurantes?: Establishment[];
+  isError?: boolean;
 };
 
 type ModuleContent = {
@@ -83,11 +102,10 @@ export class ModulePage {
   private shouldScroll = false;
 
   protected prompt = '';
-  protected readonly lastQuery = signal('');
   protected readonly loading = signal(false);
-  protected readonly errorMessage = signal('');
-  protected readonly response = signal<BackendResponse | null>(null);
-  protected readonly resultados = signal<Ubicacion[]>([]);
+  protected readonly messages = signal<ChatMessage[]>([
+    { role: 'bot', text: '¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy?' }
+  ]);
 
   protected readonly content = computed(() => {
     const key = this.route.snapshot.data['moduleKey'] as string | undefined;
@@ -123,20 +141,50 @@ export class ModulePage {
 
     const query = this.prompt.trim();
     this.prompt = '';
-    this.lastQuery.set(query);
+    
+    // Add user message to UI
+    this.messages.update(msgs => [...msgs, { role: 'user', text: query }]);
     this.loading.set(true);
-    this.errorMessage.set('');
-    this.resultados.set([]);
+
+    const qLower = query.toLowerCase();
+    const isRestaurantQuery = qLower.includes('restaurant') || qLower.includes('comid') || qLower.includes('desayun') || qLower.includes('hambre') || qLower.includes('comer') || qLower.includes('almuerz');
+
+    if (isRestaurantQuery) {
+      this.http.get<Establishment[]>('http://127.0.0.1:8001/api/establishments/').subscribe({
+        next: (data) => {
+          if (data.length > 0) {
+            this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los restaurantes disponibles en el campus:', restaurantes: data }]);
+          } else {
+            this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No encontré restaurantes registrados.' }]);
+          }
+          this.loading.set(false);
+        },
+        error: () => {
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Error al obtener la lista de restaurantes.', isError: true }]);
+          this.loading.set(false);
+        }
+      });
+      return;
+    }
 
     this.http.get<BusquedaResponse>(this.apiUrl, {
       params: { q: query }
     }).subscribe({
       next: (data) => {
-        this.resultados.set(data.resultados ?? []);
+        const res = data.resultados ?? [];
+        if (res.length > 0) {
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los resultados de ubicaciones:', ubicaciones: res }]);
+        } else {
+          this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No encontré ubicaciones relacionadas con tu búsqueda.' }]);
+        }
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('No se pudo conectar con el backend.');
+        this.messages.update(msgs => [...msgs, { 
+          role: 'bot', 
+          text: 'No se pudo conectar con el backend.', 
+          isError: true 
+        }]);
         this.loading.set(false);
       }
     });

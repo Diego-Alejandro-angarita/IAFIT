@@ -1,22 +1,23 @@
 import os
 from supabase import create_client
-from sentence_transformers import SentenceTransformer
+from llama_index.embeddings.gemini import GeminiEmbedding
 
 # 1. Conexión a Supabase
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY"))
-
-# 2. Cargar el modelo en memoria (Se carga una sola vez al iniciar Django)
-print("Inicializando motor de búsqueda semántica...")
-model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def buscar_ubicacion_semantica(pregunta):
     """
     Recibe la pregunta de Angular, la vectoriza y consulta a Supabase.
     """
-    # Convertir texto a matemáticas
-    vector_pregunta = model.encode(pregunta).tolist()
+    # Usar GeminiEmbedding para emparejar la dimensionalidad (3072) esperada por la base de datos
+    embed_model = GeminiEmbedding(
+        api_key=os.environ.get("GEMINI_API_KEY"), 
+        model_name="models/gemini-embedding-001"
+    )
+    
+    vector_pregunta = embed_model.get_text_embedding(pregunta)
 
-    # Llamar a la función RPC que ya creaste en Supabase
+    # Llamar a la función RPC en Supabase
     respuesta = supabase.rpc(
         'buscar_ubicaciones_local',
         {
