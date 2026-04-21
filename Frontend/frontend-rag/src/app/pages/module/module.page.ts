@@ -95,11 +95,11 @@ export class ModulePage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly eventosService = inject(EventosService);
 
-  private readonly apiUrl = 'http://127.0.0.1:8001/';
+  private readonly apiUrl = 'http://127.0.0.1:8001/api/';
   private readonly askUrl = 'http://127.0.0.1:8001/api/ask/';
   private readonly ragUrl = 'http://127.0.0.1:8001/api/query/';
-  private readonly apiUrlBuscar = 'http://127.0.0.1:8001/buscar/';
-  private readonly calendarApiUrl = 'http://127.0.0.1:8001/calendario/buscar/';
+  private readonly apiUrlBuscar = 'http://127.0.0.1:8001/api/buscar/';
+  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/calendario/buscar/';
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   private shouldScroll = false;
@@ -257,7 +257,7 @@ export class ModulePage {
           error: () => this.fallBackToRag(pregunta)
         });
     } else if (esCalendario) {
-      this.http.get<CalendarioResponse>('http://127.0.0.1:8001/calendario/buscar/', { params: { q: pregunta } })
+      this.http.get<CalendarioResponse>('http://127.0.0.1:8001/api/calendario/buscar/', { params: { q: pregunta } })
         .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (data) => {
             const contexto = JSON.stringify(data.resultados);

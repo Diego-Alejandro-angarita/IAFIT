@@ -63,7 +63,7 @@ export class CalendarPage implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.http.get<CalendarResponse>('http://127.0.0.1:8001/calendario/')
+    this.http.get<CalendarResponse>('http://127.0.0.1:8001/api/calendario/')
       .subscribe({
         next: (data) => {
           const enriched = (data.eventos ?? []).map(e => ({
