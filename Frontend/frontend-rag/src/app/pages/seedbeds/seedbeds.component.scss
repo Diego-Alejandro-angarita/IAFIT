@@ -239,6 +239,9 @@
   transition: transform 0.22s ease, box-shadow 0.22s ease;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 
   .faculty-pill {
   display: inline-block;
@@ -325,7 +328,7 @@
 .card-actions {
   display: flex;
   gap: 0.75rem;
-  margin-top: 1.2rem;
+  margin-top: auto;
   flex-wrap: wrap;
 }
 
