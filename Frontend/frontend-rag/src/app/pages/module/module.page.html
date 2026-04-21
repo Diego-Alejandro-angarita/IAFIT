@@ -37,6 +37,7 @@
         </div>
       </div>
     </header>
+<<<<<<< HEAD
     <div class="chat-body" #messagesContainer>
       <div class="chat-messages">
         <div class="chat-messages-inner">
@@ -115,9 +116,20 @@
               </div>
             </div>
           }
+=======
+
+    <div class="chat-messages">
+      <div class="chat-messages-inner">
+        <!-- Bot welcome -->
+        <div class="msg-row bot">
+          <div class="msg-bubble bot-bubble">
+            <p>¡Hola! Soy el Asistente Virtual IAFIT. ¿En qué puedo ayudarte hoy? Puedo responder preguntas sobre semilleros de investigación, facultades, tutores y más.</p>
+          </div>
+>>>>>>> BranchFelipe
         </div>
       </div>
 
+<<<<<<< HEAD
       <!-- Chat input — fixed above dock -->
       <div class="chat-input-bar">
         <div class="chat-input-inner">
@@ -144,6 +156,36 @@
               /><path d="m21.854 2.147-10.94 10.939" /></svg>
           </button>
         </div>
+=======
+        @if (response(); as respuesta) {
+          <div class="msg-row user">
+            <div class="msg-bubble user-bubble">
+              <p>{{ prompt || 'Consulta enviada' }}</p>
+            </div>
+          </div>
+          <div class="msg-row bot">
+            <div class="msg-bubble bot-bubble response-bubble">
+              <pre class="response-text">{{ respuesta }}</pre>
+            </div>
+          </div>
+        }
+
+        @if (loading()) {
+          <div class="msg-row bot">
+            <div class="msg-bubble bot-bubble typing">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+          </div>
+        }
+
+        @if (errorMessage()) {
+          <div class="msg-row bot">
+            <div class="msg-bubble bot-bubble error-bubble">
+              <p>{{ errorMessage() }}</p>
+            </div>
+          </div>
+        }
+>>>>>>> BranchFelipe
       </div>
     </div>
 

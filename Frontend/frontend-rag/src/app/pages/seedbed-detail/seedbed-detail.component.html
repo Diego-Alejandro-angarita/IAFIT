@@ -1,0 +1,63 @@
+<div class="detail-page">
+
+  <div *ngIf="loading" class="detail-card">
+    <p>Cargando información del semillero...</p>
+  </div>
+
+  <div *ngIf="!loading && errorMessage" class="detail-card">
+    <a routerLink="/seedbeds" class="back-link">← Volver a semilleros</a>
+    <h2>Error</h2>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div class="detail-card" *ngIf="!loading && seedbed">
+    <div class="detail-header">
+      <a routerLink="/seedbeds" class="back-link">← Volver a semilleros</a>
+    </div>
+
+    <div class="detail-top">
+      <div class="detail-title-area">
+        <div class="detail-logo">IA</div>
+        <div>
+          <h1>{{ seedbed.name }}</h1>
+          <p class="detail-subtitle">
+            Información detallada sobre este semillero de investigación activo.
+          </p>
+        </div>
+      </div>
+
+      <span class="status-badge">Activo</span>
+    </div>
+
+    <div class="info-pills">
+      <span class="info-pill">{{ seedbed.faculty }}</span>
+      <span class="info-pill">Tutor: {{ seedbed.tutor === 'TBD' ? 'Por definir' : seedbed.tutor }}</span>
+    </div>
+
+    <div class="content-section">
+      <h3>Descripción</h3>
+      <p>
+        {{
+          seedbed.description && seedbed.description !== 'Description not available yet.' && seedbed.description !== 'Descripción no disponible aún.'
+            ? seedbed.description
+            : 'Descripción no disponible aún.'
+        }}
+      </p>
+    </div>
+
+    <div class="detail-actions">
+      <a
+        *ngIf="seedbed.source_url"
+        [href]="seedbed.source_url"
+        target="_blank"
+        class="btn-primary-custom"
+      >
+        Visitar fuente oficial de EAFIT
+      </a>
+
+      <a routerLink="/seedbeds" class="btn-secondary-custom">
+        Volver al listado
+      </a>
+    </div>
+  </div>
+</div>

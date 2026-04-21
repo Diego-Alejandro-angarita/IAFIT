@@ -32,7 +32,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
-    'LlamaIndex'
+    'LlamaIndex',
+    'research',
 ]
 
 MIDDLEWARE = [

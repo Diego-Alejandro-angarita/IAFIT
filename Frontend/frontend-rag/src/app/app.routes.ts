@@ -4,6 +4,8 @@ import { ModulePage } from './pages/module/module.page';
 import { MapPage } from './pages/map/map.page';
 import { CalendarPage } from './pages/calendar/calendar.page';
 import { GastronomicOfferComponent } from './components/gastronomic-offer/gastronomic-offer.component';
+import { SeedbedsComponent } from './pages/seedbeds/seedbeds.component';
+import { SeedbedDetailComponent } from './pages/seedbed-detail/seedbed-detail.component';
 
 export const routes: Routes = [
 	{
@@ -51,6 +53,14 @@ export const routes: Routes = [
 		path: 'chat',
 		component: ModulePage,
 		data: { moduleKey: 'chat' }
+	},
+	{
+		path: 'seedbeds',
+		component: SeedbedsComponent
+	},
+	{
+		path: 'seedbeds/:id',
+		component: SeedbedDetailComponent
 	},
 	{
 		path: '**',

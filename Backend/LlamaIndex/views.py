@@ -13,7 +13,13 @@ from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Event, Establishment, Category, Menu
-from .services import consultar_rag, indexar_documento, obtener_directorio
+from .services import (
+    consultar_rag,
+    indexar_documento,
+    obtener_directorio,
+    es_pregunta_sobre_semilleros,
+    consultar_semilleros_con_llm
+)
 from .ia_service import buscar_ubicacion_semantica, consultar_eventos_ia, listar_calendario, buscar_evento_semantico
 from .serializers import (
     EstablishmentSerializer,
@@ -33,6 +39,10 @@ def get_today():
 
 @csrf_exempt
 def query_llama_index(request):
+    """
+    Endpoint principal para consultas del chat.
+    Detecta automáticamente si la pregunta es sobre semilleros o usa el RAG general.
+    """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -41,17 +51,64 @@ def query_llama_index(request):
             
             if not query:
                 return JsonResponse({'error': 'El campo "query" es requerido.'}, status=400)
+            
+            # Detectar si es pregunta sobre semilleros
+            if es_pregunta_sobre_semilleros(query):
+                respuesta = consultar_semilleros_con_llm(query)
+                fuente = 'semilleros'
+            else:
+                # Si hay contexto de ubicaciones/calendario, enriquecer la query
+                if contexto:
+                    query = f"Información adicional sobre ubicaciones o calendario encontrada en una base de datos externa:\n{contexto}\n\nAplica este contexto si la pregunta es relevante a un bloque o calendario.\nPregunta del usuario: {query}"
                 
-            if contexto:
-                query = f"Información adicional sobre ubicaciones o calendario encontrada en una base de datos externa:\n{contexto}\n\nAplica este contexto si la pregunta es relevante a un bloque o calendario.\nPregunta del usuario: {query}"
-                
-            respuesta = consultar_rag(query)
-            return JsonResponse({'respuesta': respuesta}, status=200)
+                # Consultar base de vectores (RAG general)
+                try:
+                    respuesta = consultar_rag(query)
+                    fuente = 'rag'
+                except Exception as rag_error:
+                    # Si falla el RAG, intentar con semilleros como fallback
+                    print(f"RAG error, trying seedbeds: {rag_error}")
+                    respuesta = consultar_semilleros_con_llm(query)
+                    fuente = 'semilleros_fallback'
+            
+            return JsonResponse({
+                'respuesta': respuesta,
+                'fuente': fuente
+            }, status=200)
+            
         except json.JSONDecodeError:
             return JsonResponse({'error': 'JSON inválido.'}, status=400)
         except Exception as e:
             traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Método no permitido. Use POST.'}, status=405)
+
+
+@csrf_exempt
+def query_semilleros(request):
+    """
+    Endpoint específico para consultas sobre semilleros de investigación.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            query = data.get('query')
+            
+            if not query:
+                return JsonResponse({'error': 'El campo "query" es requerido.'}, status=400)
+            
+            respuesta = consultar_semilleros_con_llm(query)
+            
+            return JsonResponse({
+                'respuesta': respuesta,
+                'fuente': 'semilleros'
+            }, status=200)
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON inválido.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+            
     return JsonResponse({'error': 'Método no permitido. Use POST.'}, status=405)
 
 

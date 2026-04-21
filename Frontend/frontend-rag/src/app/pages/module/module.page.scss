@@ -21,9 +21,9 @@
 /* ---- Shared header bar ---- */
 .chat-header,
 .module-header {
-  background: #24306e;
+  background: #2f377b;
   color: #fff;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
 }
 
 .chat-header-inner,
@@ -35,12 +35,41 @@
   align-items: center;
   gap: 1rem;
 }
+<<<<<<< HEAD
 .back-btn {
   display: flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 50%; border: none;
   background: rgba(255,255,255,0.15); color: white;
   cursor: pointer; text-decoration: none; flex-shrink: 0; transition: background 0.2s;
   &:hover { background: rgba(255,255,255,0.25); }
+=======
+
+/* Match the reference banner proportions for module pages. */
+.module-header {
+  min-height: 90px;
+}
+
+.module-header-inner {
+  max-width: none;
+  width: 100%;
+  min-height: 90px;
+  padding: 0 clamp(1rem, 8vw, 10rem);
+  gap: 1.25rem;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  text-decoration: none;
+  transition: background 200ms;
+  &:hover { background: rgba(255,255,255,.2); }
+>>>>>>> BranchFelipe
 }
 
 // ── Módulo genérico ───────────────────────────────────────
@@ -54,6 +83,7 @@
 .btn-outline { border: 1.5px solid #003087; color: #003087; background: white; border-radius: 8px; padding: 8px 18px; font-size: 0.88rem; text-decoration: none; transition: all 0.2s; &:hover { background: #003087; color: white; } }
 .btn-primary { background: #003087; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 0.88rem; text-decoration: none; transition: background 0.2s; &:hover { background: #0d6efd; } }
 
+<<<<<<< HEAD
 // ── Chat ──────────────────────────────────────────────────
 .chat-header { background: #003087; padding: 16px; flex-shrink: 0; }
 .chat-header-inner { display: flex; align-items: center; gap: 12px; }
@@ -61,6 +91,59 @@
 .chat-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
 .chat-title { color: white; font-size: 1rem; font-weight: 700; margin: 0; }
 .chat-subtitle { color: rgba(255,255,255,0.7); font-size: 0.78rem; margin: 0; }
+=======
+.chat-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #FFB800;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #24306e;
+}
+
+.chat-title {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #fff;
+}
+
+.chat-subtitle {
+  color: #bfdbfe;
+  font-size: .875rem;
+}
+
+.module-title {
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .module-header,
+  .module-header-inner {
+    min-height: 72px;
+  }
+
+  .module-header-inner {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
+
+  .module-title {
+    font-size: 1.6rem;
+  }
+
+  .back-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* ---- Chat messages ---- */
+>>>>>>> BranchFelipe
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -98,6 +181,7 @@
   color: #dc2626;
 }
 
+<<<<<<< HEAD
 /* Calendar result bubbles */
 .calendar-bubble {
   border-left: 3px solid #6366f1;
@@ -120,6 +204,24 @@
     font-size: .8125rem;
     color: #6b7280;
   }
+=======
+/* Response text formatting */
+.response-bubble {
+  max-width: 90%;
+}
+
+.response-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  overflow-x: auto;
+>>>>>>> BranchFelipe
 }
 
 /* Typing dots */

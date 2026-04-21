@@ -19,4 +19,5 @@ urlpatterns = [
     path('directorio/', views.get_directory, name='get_directory'),
     path('calendario/', views.calendario, name='calendario'),
     path('calendario/buscar/', views.buscar_calendario, name='buscar_calendario'),
+    path('semilleros/', views.query_semilleros, name='query_semilleros'),
 ]
