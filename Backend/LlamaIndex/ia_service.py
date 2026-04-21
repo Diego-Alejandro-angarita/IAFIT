@@ -148,14 +148,3 @@ def buscar_evento_semantico(pregunta):
     resultados = [r for r in resultados if r['similitud'] >= mejor - 0.08]
 
     return resultados
-def consultar_eventos_ia(pregunta, eventos_contexto):
-    _configure_gemini()
-    prompt = f"""
-Eres un asistente de IAFIT. Responde la siguiente pregunta sobre los eventos basándote ÚNICAMENTE en este contexto:
-{eventos_contexto}
-
-Pregunta: {pregunta}
-"""
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    response = model.generate_content(prompt)
-    return response.text

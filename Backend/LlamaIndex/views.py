@@ -18,9 +18,10 @@ from .services import (
     indexar_documento,
     obtener_directorio,
     es_pregunta_sobre_semilleros,
-    consultar_semilleros_con_llm
+    consultar_semilleros_con_llm,
+    consultar_eventos_ia
 )
-from .ia_service import buscar_ubicacion_semantica, consultar_eventos_ia, listar_calendario, buscar_evento_semantico
+from .ia_service import buscar_ubicacion_semantica, listar_calendario, buscar_evento_semantico
 from .serializers import (
     EstablishmentSerializer,
     EstablishmentListSerializer,
@@ -66,10 +67,9 @@ def query_llama_index(request):
                     respuesta = consultar_rag(query)
                     fuente = 'rag'
                 except Exception as rag_error:
-                    # Si falla el RAG, intentar con semilleros como fallback
-                    print(f"RAG error, trying seedbeds: {rag_error}")
-                    respuesta = consultar_semilleros_con_llm(query)
-                    fuente = 'semilleros_fallback'
+                    print(f"RAG error: {rag_error}")
+                    respuesta = "No pude obtener la información del directorio en este momento."
+                    fuente = 'rag_error'
             
             return JsonResponse({
                 'respuesta': respuesta,

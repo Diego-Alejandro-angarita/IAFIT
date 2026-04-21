@@ -5,7 +5,6 @@ from llama_index.core import VectorStoreIndex, Document, StorageContext, Setting
 from llama_index.llms.gemini import Gemini
 from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.vector_stores.postgres import PGVectorStore
-from google import genai
 
 # ── Configurar Gemini ──────────────────────────────────────
 def configure_gemini():
@@ -24,16 +23,14 @@ except Exception as e:
 # ── Semilleros de Investigación ────────────────────────────
 
 SEEDBED_KEYWORDS = [
-    'semillero', 'semilleros', 'investigación', 'investigacion',
-    'tutor', 'tutores', 'coordinador', 'profesor',
-    'facultad', 'escuela', 'grupo de investigación',
-    'seedbed', 'research group', 'investigar',
+    'semillero', 'semilleros', 'grupo de investigación', 'grupo de investigacion',
+    'seedbed', 'research group'
 ]
 
 def es_pregunta_sobre_semilleros(query: str) -> bool:
-    """Detecta si la pregunta está relacionada con semilleros de investigación."""
+    """Detecta si la pregunta está relacionada con semilleros de investigación usando límites de palabra."""
     query_lower = query.lower()
-    return any(keyword in query_lower for keyword in SEEDBED_KEYWORDS)
+    return any(re.search(rf'\b{re.escape(keyword)}\b', query_lower) for keyword in SEEDBED_KEYWORDS)
 
 
 def buscar_semilleros_relevantes(query: str):
@@ -187,17 +184,17 @@ from llama_index.core import PromptTemplate
 
 QA_PROMPT = PromptTemplate(
     "Eres el asistente virtual de la Universidad EAFIT, llamado IAFIT.\n"
-    "Aquí tienes algo de contexto extraído de nuestra base de datos (actualmente enfocado en el directorio de profesores):\n"
+    "A continuación, se te proporciona información de contexto extraída estrictamente de nuestra base de datos (Directorio de profesores y otra información institucional):\n"
     "---------------------\n"
     "{context_str}\n"
     "---------------------\n"
-    "Si la pregunta del usuario está relacionada con el contexto, respóndela basándote en la información dada.\n"
-    "Si la pregunta es un saludo (hola, buenos días, quién eres) o cualquier otro tema general que no esté en el contexto, "
-    "ESTÁS AUTORIZADO a usar tus conocimientos generales como IA para responder de forma amable y servicial en español, "
-    "sin decir frases limitantes como 'I cannot answer that based on the provided context'. "
-    "Nunca reveles al usuario si sacaste la info del contexto o de tus conocimientos, simplemente da una respuesta directa.\n"
+    "REGLAS ESTRICTAS:\n"
+    "1. DEBES responder a la pregunta basándote ÚNICAMENTE en la información de contexto proporcionada arriba.\n"
+    "2. Si la información no está en el contexto, DEBES responder: 'No tengo la información exacta en mi base de datos en este momento, ¿puedo ayudarte con algo más?'.\n"
+    "3. No uses tus conocimientos generales previos para inventar o rellenar detalles sobre profesores u otras entidades de EAFIT.\n"
+    "4. Si el usuario te saluda, responde amablemente y pregúntale en qué puedes ayudarle.\n"
     "Pregunta del usuario: {query_str}\n"
-    "Respuesta de IAFIT:"
+    "Respuesta concreta de IAFIT:"
 )
 
 def consultar_rag(query: str):
@@ -210,7 +207,8 @@ def consultar_rag(query: str):
     motor_consulta = indice.as_query_engine(
         llm=Settings.llm, 
         embed_model=Settings.embed_model,
-        text_qa_template=QA_PROMPT
+        text_qa_template=QA_PROMPT,
+        similarity_top_k=5
     )
     respuesta = motor_consulta.query(query)
     
@@ -273,16 +271,12 @@ def obtener_directorio():
 from datetime import date
 
 def consultar_eventos_ia(query: str, eventos_contexto: list[dict]) -> str:
-    api_key = os.environ.get("GEMINI_API_KEY")
-    client = genai.Client(api_key=api_key)
     hoy = date.today().strftime('%Y-%m-%d')
     contexto = "\n".join([
         f"- {e.get('title')} | Fecha: {e.get('event_date')} | Hora: {e.get('event_time')} | Lugar: {e.get('location')}"
         for e in eventos_contexto
     ])
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=f"""Eres el asistente virtual de la Universidad EAFIT llamado IAFIT.
+    prompt = f"""Eres el asistente virtual de la Universidad EAFIT llamado IAFIT.
 Hoy es {hoy} (formato YYYY-MM-DD).
 
 Tienes acceso a la lista completa de eventos próximos del campus.
@@ -303,5 +297,6 @@ Lista de eventos:
 {contexto}
 
 Pregunta: {query}"""
-    )
-    return response.text
+    
+    response = Settings.llm.complete(prompt)
+    return str(response)

@@ -223,7 +223,7 @@ export class ModulePage {
     
     // Categorías de palabras clave
     const kwEventos = ['evento', 'eventos', 'actividad', 'actividades', 'agenda', 'conferencia', 'taller'];
-    const kwUbicacion = ['bloque', 'piso', 'aula', 'dónde', 'donde', 'ubicacion', 'ubicación', 'llegar', 'campus', 'restaurante'];
+    const kwUbicacion = ['bloque', 'piso', 'aula', 'ubicacion', 'ubicación', 'llegar a', 'campus', 'restaurante'];
     const kwCalendario = ['calendario', 'parcial', 'parciales', 'clase', 'clases', 'matrícula', 'matricula', 'semestre', 'requisito'];
 
     const esEventos = kwEventos.some(k => queryLower.includes(k));
