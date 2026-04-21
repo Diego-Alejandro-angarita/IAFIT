@@ -3,6 +3,7 @@ import { HomePage } from './pages/home/home.page';
 import { ModulePage } from './pages/module/module.page';
 import { MapPage } from './pages/map/map.page';
 import { CalendarPage } from './pages/calendar/calendar.page';
+import { GastronomicOfferComponent } from './components/gastronomic-offer/gastronomic-offer.component';
 
 export const routes: Routes = [
 	{
@@ -20,8 +21,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'restaurants',
-		component: ModulePage,
-		data: { moduleKey: 'restaurants' }
+		component: GastronomicOfferComponent
 	},
 	{
 		path: 'events',

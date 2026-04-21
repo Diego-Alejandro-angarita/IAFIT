@@ -37,8 +37,8 @@
         </div>
       </div>
     </header>
-    <div class="chat-body">
-      <div class="chat-messages" #messagesContainer>
+    <div class="chat-body" #messagesContainer>
+      <div class="chat-messages">
         <div class="chat-messages-inner">
           @for (msg of messages(); track $index) {
             @if (msg.role === 'user') {
@@ -83,6 +83,22 @@
                     </div>
                   </div>
                 }
+              } @else if (msg.restaurantes?.length) {
+                <div class="msg-row bot">
+                  <div class="msg-bubble bot-bubble" style="width: 100%; max-width: 100%; display: flex; flex-direction: column; gap: 8px; background: transparent; padding: 0;">
+                    <p style="background: white; padding: 12px 16px; border-radius: 12px; margin: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">{{ msg.text }}</p>
+                    @for (rest of msg.restaurantes; track rest.id) {
+                      <div style="background: white; border-radius: 12px; padding: 12px; border-left: 5px solid #ffb800; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px;">
+                        <h4 style="margin: 0; color: #003087; font-size: 1rem;">{{ rest.name }} <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">({{ rest.establishment_type_display }})</span></h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: #475569;">📍 {{ rest.location }}</p>
+                        <p style="margin: 0; font-size: 0.85rem; font-weight: 500;" 
+                           [style.color]="rest.current_status.status === 'Open' ? '#16a34a' : '#dc2626'">
+                          {{ rest.current_status.message }}
+                        </p>
+                      </div>
+                    }
+                  </div>
+                </div>
               } @else {
                 <div class="msg-row bot">
                   <div class="msg-bubble bot-bubble">
@@ -101,6 +117,8 @@
           }
         </div>
       </div>
+
+      <!-- Chat input — fixed above dock -->
       <div class="chat-input-bar">
         <div class="chat-input-inner">
           <div class="chat-input-field">

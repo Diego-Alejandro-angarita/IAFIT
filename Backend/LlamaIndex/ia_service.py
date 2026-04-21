@@ -1,7 +1,7 @@
 import os
 from supabase import create_client
 import google.generativeai as genai
-
+from llama_index.embeddings.gemini import GeminiEmbedding
 # Lazy initialization to avoid crashes when env vars are not set
 _supabase = None
 _gemini_configured = False
@@ -89,6 +89,7 @@ def buscar_ubicacion_semantica(pregunta):
     """
     vector_pregunta = _generar_embedding(pregunta)
 
+    # Llamar a la función RPC en Supabase
     respuesta = _get_supabase().rpc(
         'buscar_ubicaciones_local',
         {

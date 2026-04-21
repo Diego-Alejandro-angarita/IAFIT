@@ -10,7 +10,17 @@ SECRET_KEY = 'django-insecure-gnk!_b539-)ojl8or6tuo*)-f@bev^buzosr6o9zil2st^$0$f
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '*.app.github.dev',  # Codespaces
+    'vigilant-space-meme-5g4p655xq7g9h4qx6-8000.app.github.dev',
+    'vigilant-space-meme-5g4p655xq7g9h4qx6-4200.app.github.dev',
+]
+
+
+# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -21,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'django_filters',
     'LlamaIndex'
 ]
 
@@ -98,4 +109,11 @@ TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+    ]
+}
 

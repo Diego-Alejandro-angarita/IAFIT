@@ -1,0 +1,114 @@
+<div class="gastronomic-offer-container">
+  <div class="header-bar">
+    <button class="back-button" (click)="goBack()" title="Volver">
+      <span class="back-arrow">←</span>
+    </button>
+    <h1>Oferta Gastronómica</h1>
+  </div>
+
+  <div class="content">
+    <!-- Important Note about Daily Menu -->
+    <section class="daily-menu-section">
+      <div class="daily-menu-card">
+        <div class="daily-menu-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+          </svg>
+          <h3 class="daily-menu-title">ℹ️ Información Importante</h3>
+        </div>
+        <p class="daily-menu-text">
+          Es muy importante tener en cuenta que casi todos los restaurantes de nuestro campus ofrecen un <strong>"menú del día"</strong> o <strong>"menú de estudiante"</strong>, que tiene un precio estándar de <strong>20.000 COP</strong> en 2026 y puedes comprarlo todos los días entre las <strong>12:00 PM y las 2:00 PM</strong>.
+        </p>
+      </div>
+    </section>
+
+    <div class="header">
+      <p class="subtitle">Descubre los restaurantes y cafeterías del campus</p>
+    </div>
+
+  <!-- Filtros de categorías -->
+  <div class="categories-filter">
+    <div class="filter-label">Filtrar por categoría:</div>
+    <div class="category-badges">
+      <button 
+        class="category-btn" 
+        [class.active]="selectedCategory === null"
+        (click)="filterByCategory(null)">
+        Todos
+      </button>
+      <button 
+        *ngFor="let category of categories" 
+        class="category-btn"
+        [class.active]="selectedCategory === category.name"
+        (click)="filterByCategory(category.name)">
+        {{ category.display_name }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando establecimientos...</p>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="error && !loading" class="alert alert-danger">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Lista de establecimientos -->
+  <div *ngIf="!loading && filteredEstablishments.length > 0" class="establishments-grid">
+    <div *ngFor="let est of filteredEstablishments" class="establishment-card">
+      <!-- Imagen del establecimiento -->
+      <div class="card-image">
+        <img [src]="est.image_url" [alt]="est.name" />
+        
+        <!-- Badge de estado -->
+        <div [ngClass]="'status-badge ' + getStatusClass(est.current_status.status)">
+          <span class="status-icon">{{ getStatusIcon(est.current_status.status) }}</span>
+          <span class="status-text">{{ est.current_status.message }}</span>
+        </div>
+      </div>
+
+      <!-- Contenido de la tarjeta -->
+      <div class="card-content">
+        <h3 class="establishment-name">{{ est.name }}</h3>
+        
+        <p class="establishment-type">
+          <span class="type-badge">{{ est.establishment_type_display }}</span>
+        </p>
+
+        <p class="establishment-location">
+          📍 {{ est.location }}
+        </p>
+
+        <p class="establishment-description">{{ est.description }}</p>
+
+        <!-- Categorías -->
+        <div class="categories-list">
+          <span *ngFor="let cat of est.categories" class="category-tag">
+            {{ cat.display_name }}
+          </span>
+        </div>
+
+        <!-- Información de contacto -->
+        <div class="contact-info">
+          <p *ngIf="est.phone">
+            <strong>📞</strong> {{ est.phone }}
+          </p>
+          <p *ngIf="est.email">
+            <strong>📧</strong> {{ est.email }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de estado vacío -->
+  <div *ngIf="!loading && filteredEstablishments.length === 0" class="empty-state">
+    <p class="empty-message">
+      {{ getEmptyMessage() }}
+    </p>
+  </div>
+  </div>
+</div>

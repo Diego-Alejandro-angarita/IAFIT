@@ -5,12 +5,22 @@ import pytz
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
+from rest_framework import viewsets, status
+from rest_framework.decorators import action, api_view
+from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Event
-from django.views.decorators.http import require_GET
+from .models import Event, Establishment, Category, Menu
 from .services import consultar_rag, indexar_documento, obtener_directorio
-from .ia_service import buscar_ubicacion_semantica, consultar_eventos_ia
+from .ia_service import buscar_ubicacion_semantica, consultar_eventos_ia, listar_calendario, buscar_evento_semantico
+from .serializers import (
+    EstablishmentSerializer,
+    EstablishmentListSerializer,
+    CategorySerializer,
+    MenuSerializer
+)
 
 # Zona horaria de Colombia
 BOGOTA_TZ = pytz.timezone('America/Bogota')
@@ -20,7 +30,6 @@ def get_today():
     return datetime.now(BOGOTA_TZ).date()
 
 # --- VISTAS DE IA (API) ---
-from .ia_service import buscar_ubicacion_semantica, listar_calendario, buscar_evento_semantico
 
 @csrf_exempt
 def query_llama_index(request):
@@ -45,6 +54,7 @@ def query_llama_index(request):
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Método no permitido. Use POST.'}, status=405)
 
+
 @csrf_exempt
 def index_document(request):
     if request.method == 'POST':
@@ -61,6 +71,7 @@ def index_document(request):
             traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Método no permitido. Use POST.'}, status=405)
+
 
 @require_GET
 def calendario(request):
@@ -88,43 +99,98 @@ def buscar_calendario(request):
 
 @require_GET
 def buscar_campus(request):
+    """endpoints para buscar ubicaciones en el campus"""
     query = request.GET.get('q', '')
-
     if not query:
-        return JsonResponse({'error': 'Debes enviar una pregunta en el parámetro "q"'}, status=400)
-
+        return JsonResponse({'error': 'Consulta vacía'}, status=400)
     try:
-        resultados = buscar_ubicacion_semantica(query)
-        return JsonResponse({'resultados': resultados}, status=200)
+        result = buscar_ubicacion_semantica(query)
+        return JsonResponse({'resultado': result}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-def get_directory(request):
-    if request.method == 'GET':
-        directorio = obtener_directorio()
-        return JsonResponse(directorio, safe=False, status=200)
+
+# ViewSets para la Oferta Gastronómica
+class EstablishmentViewSet(viewsets.ModelViewSet):
+    """ViewSet para manejar establecimientos gastronómicos"""
+    queryset = Establishment.objects.prefetch_related('categories', 'schedules', 'menus')
+    serializer_class = EstablishmentSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['name', 'description', 'location']
+    filterset_fields = ['establishment_type']
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return EstablishmentListSerializer
+        return EstablishmentSerializer
+    
+    @action(detail=False, methods=['get'])
+    def by_category(self, request):
+        """Obtener establecimientos filtrados por categoría"""
+        category_name = request.query_params.get('category', None)
         
-    return JsonResponse({'error': 'Método no permitido. Use GET.'}, status=405)
-
-@require_GET
-def buscar_campus(request):
-    query = request.GET.get('q', '')
-
-    if not query:
-        return JsonResponse({'error': 'Debes enviar una pregunta en el parámetro "q"'}, status=400)
-
-    try:
-        resultados = buscar_ubicacion_semantica(query)
-        return JsonResponse({'resultados': resultados}, status=200)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-def get_directory(request):
-    if request.method == 'GET':
-        directorio = obtener_directorio()
-        return JsonResponse(directorio, safe=False, status=200)
+        if not category_name:
+            return Response(
+                {'error': 'El parámetro "category" es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-    return JsonResponse({'error': 'Método no permitido. Use GET.'}, status=405)
+        try:
+            category = Category.objects.get(name=category_name)
+            establishments = self.queryset.filter(categories=category)
+            serializer = self.get_serializer(establishments, many=True)
+            return Response(serializer.data)
+        except Category.DoesNotExist:
+            return Response(
+                {'error': f'Categoría "{category_name}" no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=False, methods=['get'])
+    def open_now(self, request):
+        """Obtener establecimientos que están abiertos ahora"""
+        from django.utils import timezone
+        
+        now = timezone.now()
+        today = now.isoweekday()  # 1=Lunes, 7=Domingo
+        current_time = now.time()
+        
+        # Subquery para obtener establecimientos con horarios válidos para hoy
+        from django.db.models import Q
+        from .models import Schedule
+        
+        establishments = self.queryset.filter(
+            schedules__day_of_week=today,
+            schedules__is_open=True,
+            schedules__opening_time__lte=current_time,
+            schedules__closing_time__gt=current_time
+        ).distinct()
+        
+        serializer = self.get_serializer(establishments, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def categories(self, request):
+        """Obtener todas las categorías disponibles"""
+        categories = Category.objects.all()
+        serializer = CategorySerializer(categories, many=True)
+        return Response(serializer.data)
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """ViewSet para manejar categorías"""
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class MenuViewSet(viewsets.ModelViewSet):
+    """ViewSet para manejar menús"""
+    queryset = Menu.objects.all()
+    serializer_class = MenuSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['establishment']
+
+
 
 @csrf_exempt
 def ask_about_events(request):
@@ -141,6 +207,21 @@ def ask_about_events(request):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
+
+# --- VISTAS DEL DIRECTORIO ---
+
+@require_GET
+def get_directory(request):
+    """
+    Retorna la lista de profesores desde Supabase.
+    """
+    try:
+        data = obtener_directorio()
+        return JsonResponse(data, safe=False, status=200)
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 # --- VISTAS DE EVENTOS (API REST) ---
 
