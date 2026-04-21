@@ -7,6 +7,7 @@
   background: #f9fafb;
   display: flex;
   flex-direction: column;
+  padding-bottom: 5rem; // Espacio para el dock-nav (dashboard)
 }
 
 // ── Chat container (wraps messages + input bar) ────────────
@@ -274,35 +275,7 @@
 .info-val   { color: #6c757d; font-size: 0.9rem; margin: 0; }
 .btn-volver { border: 1.5px solid #003087; background: white; color: #003087; border-radius: 8px; padding: 8px 20px; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; transition: all 0.2s; &:hover { background: #003087; color: white; } }
 
-/* ——— Chat input bar ——— */
-.chat-input-bar {
-  position: fixed; bottom: 5rem; left: 0; right: 0;
-  background: white; border-top: 1px solid rgba(255,255,255,0.2);
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.05); z-index: 40;
-}
-.chat-input-inner {
-  max-width: 56rem; margin: 0 auto; padding: 1rem;
-  display: flex; align-items: center; gap: 12px;
-}
-.chat-input-field {
-  flex: 1;
-  input {
-    width: 100%; padding: 14px 20px; border-radius: 24px;
-    border: 1px solid #e2e8f0; outline: none; font-size: 1rem;
-    transition: all 0.2s; background: #f8fafc;
-    &:focus { border-color: #003087; background: white; box-shadow: 0 0 0 3px rgba(0,48,135,0.1); }
-  }
-}
-.send-btn {
-  width: 48px; height: 48px; border-radius: 50%; border: none;
-  background: #e2e8f0; color: #94a3b8;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; pointer-events: none; flex-shrink: 0;
-  &.active {
-    background: #003087; color: white; cursor: pointer; pointer-events: auto;
-    &:hover { background: #0d6efd; transform: scale(1.05); }
-  }
-}
+
 
 /* ——— Directory ——— */
 .directory-controls {

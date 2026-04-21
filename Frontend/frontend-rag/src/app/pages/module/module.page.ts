@@ -226,9 +226,12 @@ export class ModulePage {
     const kwUbicacion = ['bloque', 'piso', 'aula', 'ubicacion', 'ubicación', 'llegar a', 'campus', 'restaurante'];
     const kwCalendario = ['calendario', 'parcial', 'parciales', 'clase', 'clases', 'matrícula', 'matricula', 'semestre', 'requisito'];
 
+    const kwRestaurantes = ['restaurant', 'comid', 'desayun', 'hambre', 'comer', 'almuerz'];
+
     const esEventos = kwEventos.some(k => queryLower.includes(k));
     const esUbicacion = kwUbicacion.some(k => queryLower.includes(k));
     const esCalendario = kwCalendario.some(k => queryLower.includes(k));
+    const esRestaurante = kwRestaurantes.some(k => queryLower.includes(k));
 
     if (esEventos) {
       this.eventosService.getAllEventos().subscribe({
@@ -249,12 +252,30 @@ export class ModulePage {
         },
         error: () => this.fallBackToRag(pregunta)
       });
+    } else if (esRestaurante) {
+      this.http.get<Establishment[]>('http://127.0.0.1:8001/api/establishments/').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (data) => {
+          if (data.length > 0) {
+            this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los restaurantes disponibles en el campus:', restaurantes: data }]);
+          } else {
+            this.messages.update(msgs => [...msgs, { role: 'bot', text: 'No encontré restaurantes registrados.' }]);
+          }
+          this.loading.set(false);
+        },
+        error: () => this.fallBackToRag(pregunta)
+      });
     } else if (esUbicacion) {
       this.http.get<BusquedaResponse>(this.apiUrlBuscar, { params: { q: pregunta } })
         .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (data) => {
-            const contexto = JSON.stringify(data.resultados);
-            this.fallBackToRag(pregunta, contexto);
+            const res = data.resultados ?? [];
+            if (res.length > 0) {
+              this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los resultados de ubicaciones:', ubicaciones: res }]);
+            } else {
+              // Si la búsqueda espacial no da resultados, enviar a RAG general
+              this.fallBackToRag(pregunta);
+            }
+            this.loading.set(false);
           },
           error: () => this.fallBackToRag(pregunta)
         });

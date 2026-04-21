@@ -162,7 +162,7 @@ def buscar_campus(request):
         return JsonResponse({'error': 'Consulta vacía'}, status=400)
     try:
         result = buscar_ubicacion_semantica(query)
-        return JsonResponse({'resultado': result}, status=200)
+        return JsonResponse({'resultados': result}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
