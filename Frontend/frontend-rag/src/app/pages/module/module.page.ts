@@ -6,15 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { EventosService, Evento } from '../../services/eventos.service';
 
-<<<<<<< HEAD
 export type RAGResponse = {
   respuesta: string;
-=======
-type ChatResponse = {
-  respuesta: string;
   fuente?: string;
-  error?: string;
->>>>>>> BranchFelipe
 };
 
 export type Ubicacion = {
@@ -54,6 +48,7 @@ export type Establishment = {
     message: string;
   };
 };
+
 export type ChatMessage = {
   role: 'user' | 'bot';
   text: string;
@@ -99,7 +94,6 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
 export class ModulePage {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-<<<<<<< HEAD
   private readonly destroyRef = inject(DestroyRef);
   private readonly eventosService = inject(EventosService);
 
@@ -111,14 +105,11 @@ export class ModulePage {
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   private shouldScroll = false;
-=======
-  private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/query/';
->>>>>>> BranchFelipe
 
   protected prompt = '';
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly response = signal<string | null>(null);
+  protected readonly response = signal<BackendResponse | null>(null);
 
   // Chat state
   protected readonly messages = signal<ChatMessage[]>([
@@ -212,15 +203,9 @@ export class ModulePage {
     }
   }
 
-<<<<<<< HEAD
   ngOnInit(): void {
     if (this.isEvents()) {
       this.cargarEventos('hoy');
-=======
-  protected askBackend(): void {
-    if (!this.isChat() || !this.prompt.trim()) {
-      return;
->>>>>>> BranchFelipe
     }
   }
 
@@ -234,7 +219,6 @@ export class ModulePage {
     this.loading.set(true);
     this.errorMessage.set('');
 
-<<<<<<< HEAD
     const queryLower = pregunta.toLowerCase();
     
     // Categorías de palabras clave
@@ -308,7 +292,6 @@ export class ModulePage {
     if (!query.trim()) return;
     
     this.lastQuery.set(query);
-    // Add user message to UI
     this.messages.update(msgs => [...msgs, { role: 'user', text: query }]);
     this.loading.set(true);
 
@@ -352,20 +335,6 @@ export class ModulePage {
           text: 'No se pudo conectar con el backend.', 
           isError: true 
         }]);
-=======
-    this.http.post<ChatResponse>(this.apiUrl, { query: this.prompt.trim() }).subscribe({
-      next: (data) => {
-        if (data.error) {
-          this.errorMessage.set(data.error);
-        } else {
-          this.response.set(data.respuesta);
-        }
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Error en la consulta:', err);
-        this.errorMessage.set('No se pudo conectar con el asistente. Verifica que el servidor esté activo.');
->>>>>>> BranchFelipe
         this.loading.set(false);
       }
     });
