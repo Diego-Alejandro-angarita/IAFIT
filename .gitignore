@@ -1,2 +1,8 @@
-.env 
+.env
 AGENTS.md
+
+logs
+*.log
+
+dist/
+node_modules/
