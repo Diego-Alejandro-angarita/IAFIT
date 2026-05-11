@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { EventosService, Evento } from '../../services/eventos.service';
+import { apiUrl } from '../../core/api-url';
 
 export type RAGResponse = {
   respuesta: string;
@@ -97,11 +98,12 @@ export class ModulePage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly eventosService = inject(EventosService);
 
-  private readonly apiUrl = 'http://127.0.0.1:8001/api/';
-  private readonly askUrl = 'http://127.0.0.1:8001/api/ask/';
-  private readonly ragUrl = 'http://127.0.0.1:8001/api/query/';
-  private readonly apiUrlBuscar = 'http://127.0.0.1:8001/api/buscar/';
-  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/calendario/buscar/';
+  private readonly directoryUrl = apiUrl('directorio/');
+  private readonly askUrl = apiUrl('ask/');
+  private readonly ragUrl = apiUrl('query/');
+  private readonly apiUrlBuscar = apiUrl('buscar/');
+  private readonly calendarApiUrl = apiUrl('calendario/buscar/');
+  private readonly establishmentsUrl = apiUrl('establishments/');
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   private shouldScroll = false;
@@ -253,7 +255,7 @@ export class ModulePage {
         error: () => this.fallBackToRag(pregunta)
       });
     } else if (esRestaurante) {
-      this.http.get<Establishment[]>('http://127.0.0.1:8001/api/establishments/').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      this.http.get<Establishment[]>(this.establishmentsUrl).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           if (data.length > 0) {
             this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los restaurantes disponibles en el campus:', restaurantes: data }]);
@@ -280,7 +282,7 @@ export class ModulePage {
           error: () => this.fallBackToRag(pregunta)
         });
     } else if (esCalendario) {
-      this.http.get<CalendarioResponse>('http://127.0.0.1:8001/api/calendario/buscar/', { params: { q: pregunta } })
+      this.http.get<CalendarioResponse>(this.calendarApiUrl, { params: { q: pregunta } })
         .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (data) => {
             const contexto = JSON.stringify(data.resultados);
@@ -320,7 +322,7 @@ export class ModulePage {
     const isRestaurantQuery = qLower.includes('restaurant') || qLower.includes('comid') || qLower.includes('desayun') || qLower.includes('hambre') || qLower.includes('comer') || qLower.includes('almuerz');
 
     if (isRestaurantQuery) {
-      this.http.get<Establishment[]>('http://127.0.0.1:8001/api/establishments/').subscribe({
+      this.http.get<Establishment[]>(this.establishmentsUrl).subscribe({
         next: (data) => {
           if (data.length > 0) {
             this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los restaurantes disponibles en el campus:', restaurantes: data }]);
@@ -365,7 +367,7 @@ export class ModulePage {
   protected fetchDirectory(): void {
     this.loading.set(true);
     this.errorMessage.set('');
-    this.http.get<Professor[]>(`${this.apiUrl}directorio/`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.http.get<Professor[]>(this.directoryUrl).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.professorsList.set(data);
         this.loading.set(false);

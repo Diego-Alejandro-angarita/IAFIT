@@ -53,7 +53,14 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
+    "http://localhost:4000",
+    "http://127.0.0.1:4000",
+    "http://107.20.54.80",
+    "http://107.20.54.80:4000",
+    "http://107.20.54.80:4200",
 ]
+
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 # Agrégalo justo debajo de CORS_ALLOWED_ORIGINS
 CORS_ALLOW_METHODS = [

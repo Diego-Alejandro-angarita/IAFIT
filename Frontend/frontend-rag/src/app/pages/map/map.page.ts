@@ -10,6 +10,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { apiUrl } from '../../core/api-url';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -78,7 +79,7 @@ const CAMPUS_BLOCKS: BlockInfo[] = [
 export class MapPage implements AfterViewInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8001/api/llamaindex/buscar/';
+  private readonly apiUrl = apiUrl('buscar/');
 
   private map: any;
   private markers: Map<string, any> = new Map();
