@@ -1,17 +1,8 @@
 const API_PORT = '8001';
+const API_HOST = '107.20.54.80';
 
 export function getApiBaseUrl(): string {
-  if (typeof window === 'undefined') {
-    return `http://127.0.0.1:${API_PORT}/api`;
-  }
-
-  const { hostname, protocol } = window.location;
-  const apiHost =
-    hostname === 'localhost' || hostname === '127.0.0.1'
-      ? '127.0.0.1'
-      : hostname;
-
-  return `${protocol}//${apiHost}:${API_PORT}/api`;
+  return `http://${API_HOST}:${API_PORT}/api`;
 }
 
 export function apiUrl(path: string): string {
