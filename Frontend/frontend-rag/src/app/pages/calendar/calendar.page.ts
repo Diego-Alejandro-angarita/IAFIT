@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { apiUrl } from '../../core/api-url';
 
 type CalendarEvent = {
   id: string;
@@ -63,7 +64,7 @@ export class CalendarPage implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.http.get<CalendarResponse>('http://127.0.0.1:8001/api/calendario/')
+    this.http.get<CalendarResponse>(apiUrl('calendario/'))
       .subscribe({
         next: (data) => {
           const enriched = (data.eventos ?? []).map(e => ({

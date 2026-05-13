@@ -1,0 +1,4 @@
+# Backend dependencies for IAFIT.
+# Install from the repository root with:
+#   python -m pip install -r requirements.txt
+-r Backend/requirements.txt

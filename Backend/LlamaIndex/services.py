@@ -1,5 +1,6 @@
 import os
 import re
+import unicodedata
 from urllib.parse import urlparse
 from llama_index.core import VectorStoreIndex, Document, StorageContext, Settings
 from llama_index.llms.gemini import Gemini
@@ -243,7 +244,7 @@ def obtener_directorio():
             port=parsed.port or 5432
         )
         cur = conn.cursor()
-        cur.execute("SELECT text FROM data_info_directorio LIMIT 1000;")
+        cur.execute("SELECT text, email FROM data_info_directorio LIMIT 1000;")
         rows = cur.fetchall()
         cur.close()
         conn.close()
@@ -251,13 +252,15 @@ def obtener_directorio():
         profesores = []
         for row in rows:
             texto = row[0]
+            email = row[1] or ""
             if "Profesor:" in texto and "Títulos:" in texto:
                 partes = texto.split("Títulos:")
                 nombre = partes[0].replace("Profesor:", "").strip().rstrip(".")
                 titulos = partes[1].strip().rstrip(".")
                 profesores.append({
                     "nombre": nombre,
-                    "titulos": titulos
+                    "titulos": titulos,
+                    "email": email,
                 })
         
         # Ordenar alfabéticamente
@@ -266,6 +269,71 @@ def obtener_directorio():
     except Exception as e:
         print(f"Error extrayendo directorio: {e}")
         return []
+
+
+EMAIL_KEYWORDS = [
+    "correo", "email", "e-mail", "mail", "contacto", "contactar", "escribir"
+]
+
+QUERY_STOPWORDS = {
+    "cual", "cuál", "cuales", "cuáles", "es", "el", "la", "los", "las", "de", "del",
+    "profesor", "profesora", "profesores", "docente", "docentes", "correo", "correos",
+    "email", "emails", "mail", "contacto", "contactar", "escribir", "para", "a", "al", "un", "una",
+    "me", "puedes", "decir", "dar", "dame", "sabes", "tiene", "tienen"
+}
+
+
+def _normalize_search_text(value: str) -> str:
+    ascii_value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9\s]", " ", ascii_value.lower())
+
+
+def _query_name_tokens(query: str) -> list[str]:
+    normalized = _normalize_search_text(query)
+    tokens = [token for token in normalized.split() if len(token) > 1]
+    return [token for token in tokens if token not in {_normalize_search_text(w).strip() for w in QUERY_STOPWORDS}]
+
+
+def es_pregunta_sobre_correo_profesor(query: str) -> bool:
+    normalized = _normalize_search_text(query)
+    return any(keyword in normalized for keyword in EMAIL_KEYWORDS)
+
+
+def consultar_correo_profesor(query: str) -> str | None:
+    profesores = obtener_directorio()
+    if not profesores:
+        return "No pude obtener la información del directorio en este momento."
+
+    tokens = _query_name_tokens(query)
+    profesores_con_email = [p for p in profesores if p.get("email")]
+
+    if not tokens:
+        if "profesores" in _normalize_search_text(query) or "docentes" in _normalize_search_text(query):
+            lineas = [f"- {p['nombre']}: {p['email']}" for p in profesores_con_email[:20]]
+            return "Estos son los correos disponibles en el directorio:\n" + "\n".join(lineas)
+        return "¿De qué profesor necesitas el correo?"
+
+    matches = []
+    for profesor in profesores_con_email:
+        normalized_name = _normalize_search_text(profesor["nombre"])
+        name_tokens = set(normalized_name.split())
+        score = sum(1 for token in tokens if token in name_tokens or token in normalized_name)
+        if score:
+            matches.append((score, profesor))
+
+    if not matches:
+        return "No encontré un profesor en el directorio que coincida con ese nombre."
+
+    matches.sort(key=lambda item: (-item[0], item[1]["nombre"]))
+    best_score = matches[0][0]
+    best_matches = [profesor for score, profesor in matches if score == best_score]
+
+    if len(best_matches) == 1:
+        profesor = best_matches[0]
+        return f"El correo de {profesor['nombre']} es {profesor['email']}."
+
+    lineas = [f"- {p['nombre']}: {p['email']}" for p in best_matches[:5]]
+    return "Encontré varias coincidencias. Estos son los correos disponibles:\n" + "\n".join(lineas)
 
 # ── Eventos IA ───────────────────────────────────────────
 from datetime import date

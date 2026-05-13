@@ -3,6 +3,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { apiUrl } from '../core/api-url';
 
 export interface Evento {
   id: number;
@@ -16,7 +17,7 @@ export interface Evento {
 @Injectable({ providedIn: 'root' })
 export class EventosService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8001/api/events/';
+  private readonly apiUrl = apiUrl('events/');
 
   // Mantenemos tu lógica original para vistas
   getEventos(vista: 'hoy' | 'semana' | 'todos' = 'hoy', fecha?: string): Observable<Evento[]> {

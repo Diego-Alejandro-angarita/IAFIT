@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Seedbed } from '../models/seedbed.model';
+import { apiUrl } from '../core/api-url';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SeedbedsService {
-  private apiUrl = 'http://127.0.0.1:8001/api/seedbeds/';
+  private apiUrl = apiUrl('seedbeds/');
 
   constructor(private http: HttpClient) {}
 

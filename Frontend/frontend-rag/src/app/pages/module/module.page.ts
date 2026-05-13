@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { EventosService, Evento } from '../../services/eventos.service';
+import { apiUrl } from '../../core/api-url';
 
 export type RAGResponse = {
   respuesta: string;
@@ -66,6 +67,7 @@ export type BackendResponse = {
 export type Professor = {
   nombre: string;
   titulos: string;
+  email?: string;
 };
 
 export type ModuleContent = {
@@ -79,7 +81,7 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
   restaurants: { title: 'Restaurantes',             description: 'Vista para listar menus, horarios y ubicacion de cafeterias.' },
   events:      { title: 'Agenda del Campus',         description: 'Eventos académicos y culturales del campus.' },
   calendar:    { title: 'Calendario Academico',     description: 'Vista para fechas clave, entregas y periodos institucionales.' },
-  directory:   { title: 'Directorio',               description: 'Vista para contactos de profesores y personal administrativo.' },
+  directory:   { title: 'Lis. profesores',          description: 'Vista para contactos de profesores y personal administrativo.' },
   groups:      { title: 'Grupos y Semilleros',       description: 'Vista para comunidades estudiantiles y semilleros de investigacion.' },
   profile:     { title: 'Perfil',                   description: 'Vista para datos de usuario, rol y configuraciones personales.' },
   chat:        { title: 'Asistente IA',             description: 'Vista para consultas en lenguaje natural sobre servicios IAFIT.' },
@@ -97,11 +99,12 @@ export class ModulePage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly eventosService = inject(EventosService);
 
-  private readonly apiUrl = 'http://127.0.0.1:8001/api/';
-  private readonly askUrl = 'http://127.0.0.1:8001/api/ask/';
-  private readonly ragUrl = 'http://127.0.0.1:8001/api/query/';
-  private readonly apiUrlBuscar = 'http://127.0.0.1:8001/api/buscar/';
-  private readonly calendarApiUrl = 'http://127.0.0.1:8001/api/calendario/buscar/';
+  private readonly directoryUrl = apiUrl('directorio/');
+  private readonly askUrl = apiUrl('ask/');
+  private readonly ragUrl = apiUrl('query/');
+  private readonly apiUrlBuscar = apiUrl('buscar/');
+  private readonly calendarApiUrl = apiUrl('calendario/buscar/');
+  private readonly establishmentsUrl = apiUrl('establishments/');
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   private shouldScroll = false;
@@ -134,23 +137,23 @@ export class ModulePage {
   protected readonly fechaBusqueda = signal('');
   
   protected readonly today = new Date().toISOString().split('T')[0];
+  protected readonly moduleKey = signal<string | undefined>(this.route.snapshot.data['moduleKey'] as string | undefined);
 
   protected readonly content = computed(() => {
-    const key = this.route.snapshot.data['moduleKey'] as string | undefined;
+    const key = this.moduleKey();
     return (key && MODULE_CONTENT[key]) || { title: 'Modulo', description: 'Contenido pendiente de configurar.' };
   });
 
   protected readonly isChat = computed(() =>
-    this.route.snapshot.data['moduleKey'] === 'chat'
+    this.moduleKey() === 'chat'
   );
 
   protected readonly isEvents = computed(() =>
-    this.route.snapshot.data['moduleKey'] === 'events'
+    this.moduleKey() === 'events'
   );
 
   protected readonly isDirectory = computed(() => {
-    const key = this.route.snapshot.data['moduleKey'] as string | undefined;
-    return key === 'directory';
+    return this.moduleKey() === 'directory';
   });
 
   protected readonly availableFilters = computed(() => {
@@ -189,6 +192,19 @@ export class ModulePage {
   });
 
   constructor() {
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+      const key = data['moduleKey'] as string | undefined;
+      this.moduleKey.set(key);
+
+      if (key === 'directory') {
+        this.fetchDirectory();
+        return;
+      }
+
+      this.errorMessage.set('');
+      this.loading.set(false);
+    });
+
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       if (!this.isChat()) return;
       const query = params.get('q')?.trim();
@@ -197,10 +213,6 @@ export class ModulePage {
         this.askBackend();
       }
     });
-
-    if (this.isDirectory()) {
-      this.fetchDirectory();
-    }
   }
 
   ngOnInit(): void {
@@ -253,7 +265,7 @@ export class ModulePage {
         error: () => this.fallBackToRag(pregunta)
       });
     } else if (esRestaurante) {
-      this.http.get<Establishment[]>('http://127.0.0.1:8001/api/establishments/').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      this.http.get<Establishment[]>(this.establishmentsUrl).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           if (data.length > 0) {
             this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los restaurantes disponibles en el campus:', restaurantes: data }]);
@@ -280,7 +292,7 @@ export class ModulePage {
           error: () => this.fallBackToRag(pregunta)
         });
     } else if (esCalendario) {
-      this.http.get<CalendarioResponse>('http://127.0.0.1:8001/api/calendario/buscar/', { params: { q: pregunta } })
+      this.http.get<CalendarioResponse>(this.calendarApiUrl, { params: { q: pregunta } })
         .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (data) => {
             const contexto = JSON.stringify(data.resultados);
@@ -320,7 +332,7 @@ export class ModulePage {
     const isRestaurantQuery = qLower.includes('restaurant') || qLower.includes('comid') || qLower.includes('desayun') || qLower.includes('hambre') || qLower.includes('comer') || qLower.includes('almuerz');
 
     if (isRestaurantQuery) {
-      this.http.get<Establishment[]>('http://127.0.0.1:8001/api/establishments/').subscribe({
+      this.http.get<Establishment[]>(this.establishmentsUrl).subscribe({
         next: (data) => {
           if (data.length > 0) {
             this.messages.update(msgs => [...msgs, { role: 'bot', text: 'Aquí tienes los restaurantes disponibles en el campus:', restaurantes: data }]);
@@ -365,7 +377,7 @@ export class ModulePage {
   protected fetchDirectory(): void {
     this.loading.set(true);
     this.errorMessage.set('');
-    this.http.get<Professor[]>(`${this.apiUrl}directorio/`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.http.get<Professor[]>(this.directoryUrl).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.professorsList.set(data);
         this.loading.set(false);
