@@ -13,16 +13,16 @@ try:
         result = cursor.fetchone()
         
         print("=" * 60)
-        print("✓ CONEXIÓN A SUPABASE EXITOSA")
+        print("[OK] CONEXION A SUPABASE EXITOSA")
         print("=" * 60)
-        print(f"✓ Base de datos: {result[0]}")
-        print(f"✓ Usuario: {result[1]}")
-        print(f"✓ PostgreSQL: {result[2].split(',')[0]}")
+        print(f"[OK] Base de datos: {result[0]}")
+        print(f"[OK] Usuario: {result[1]}")
+        print(f"[OK] PostgreSQL: {result[2].split(',')[0]}")
         
         # Contar tablas
         cursor.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';")
         table_count = cursor.fetchone()[0]
-        print(f"✓ Tablas públicas: {table_count}")
+        print(f"[OK] Tablas publicas: {table_count}")
         
         # Listar tablas de la app
         cursor.execute("""
@@ -35,15 +35,15 @@ try:
         tables = cursor.fetchall()
         
         if tables:
-            print(f"\n✓ Tablas de la aplicación ({len(tables)}):")
+            print(f"\n[OK] Tablas de la aplicacion ({len(tables)}):")
             for table in tables:
-                cursor.execute(f"SELECT count(*) FROM {table[0]};")
+                cursor.execute(f"SELECT count(*) FROM {connection.ops.quote_name(table[0])};")
                 count = cursor.fetchone()[0]
                 print(f"  - {table[0]}: {count} registros")
         else:
-            print("\n⚠ No se encontraron tablas de LlamaIndex (puede que necesites ejecutar migraciones)")
+            print("\n[WARN] No se encontraron tablas de LlamaIndex (puede que necesites ejecutar migraciones)")
         
         print("\n" + "=" * 60)
         
 except Exception as e:
-    print(f"❌ ERROR DE CONEXIÓN: {e}")
+    print(f"[ERROR] ERROR DE CONEXION: {e}")

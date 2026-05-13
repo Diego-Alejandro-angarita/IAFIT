@@ -17,6 +17,8 @@ from .services import (
     consultar_rag,
     indexar_documento,
     obtener_directorio,
+    es_pregunta_sobre_correo_profesor,
+    consultar_correo_profesor,
     es_pregunta_sobre_semilleros,
     consultar_semilleros_con_llm,
     consultar_eventos_ia
@@ -53,8 +55,11 @@ def query_llama_index(request):
             if not query:
                 return JsonResponse({'error': 'El campo "query" es requerido.'}, status=400)
             
-            # Detectar si es pregunta sobre semilleros
-            if es_pregunta_sobre_semilleros(query):
+            # Resolver correos de profesores directamente desde el directorio
+            if es_pregunta_sobre_correo_profesor(query):
+                respuesta = consultar_correo_profesor(query)
+                fuente = 'directorio_email'
+            elif es_pregunta_sobre_semilleros(query):
                 respuesta = consultar_semilleros_con_llm(query)
                 fuente = 'semilleros'
             else:

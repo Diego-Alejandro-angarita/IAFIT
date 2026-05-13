@@ -67,6 +67,7 @@ export type BackendResponse = {
 export type Professor = {
   nombre: string;
   titulos: string;
+  email?: string;
 };
 
 export type ModuleContent = {
@@ -80,7 +81,7 @@ const MODULE_CONTENT: Record<string, ModuleContent> = {
   restaurants: { title: 'Restaurantes',             description: 'Vista para listar menus, horarios y ubicacion de cafeterias.' },
   events:      { title: 'Agenda del Campus',         description: 'Eventos académicos y culturales del campus.' },
   calendar:    { title: 'Calendario Academico',     description: 'Vista para fechas clave, entregas y periodos institucionales.' },
-  directory:   { title: 'Directorio',               description: 'Vista para contactos de profesores y personal administrativo.' },
+  directory:   { title: 'Lis. profesores',          description: 'Vista para contactos de profesores y personal administrativo.' },
   groups:      { title: 'Grupos y Semilleros',       description: 'Vista para comunidades estudiantiles y semilleros de investigacion.' },
   profile:     { title: 'Perfil',                   description: 'Vista para datos de usuario, rol y configuraciones personales.' },
   chat:        { title: 'Asistente IA',             description: 'Vista para consultas en lenguaje natural sobre servicios IAFIT.' },
@@ -136,23 +137,23 @@ export class ModulePage {
   protected readonly fechaBusqueda = signal('');
   
   protected readonly today = new Date().toISOString().split('T')[0];
+  protected readonly moduleKey = signal<string | undefined>(this.route.snapshot.data['moduleKey'] as string | undefined);
 
   protected readonly content = computed(() => {
-    const key = this.route.snapshot.data['moduleKey'] as string | undefined;
+    const key = this.moduleKey();
     return (key && MODULE_CONTENT[key]) || { title: 'Modulo', description: 'Contenido pendiente de configurar.' };
   });
 
   protected readonly isChat = computed(() =>
-    this.route.snapshot.data['moduleKey'] === 'chat'
+    this.moduleKey() === 'chat'
   );
 
   protected readonly isEvents = computed(() =>
-    this.route.snapshot.data['moduleKey'] === 'events'
+    this.moduleKey() === 'events'
   );
 
   protected readonly isDirectory = computed(() => {
-    const key = this.route.snapshot.data['moduleKey'] as string | undefined;
-    return key === 'directory';
+    return this.moduleKey() === 'directory';
   });
 
   protected readonly availableFilters = computed(() => {
@@ -191,6 +192,19 @@ export class ModulePage {
   });
 
   constructor() {
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+      const key = data['moduleKey'] as string | undefined;
+      this.moduleKey.set(key);
+
+      if (key === 'directory') {
+        this.fetchDirectory();
+        return;
+      }
+
+      this.errorMessage.set('');
+      this.loading.set(false);
+    });
+
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       if (!this.isChat()) return;
       const query = params.get('q')?.trim();
@@ -199,10 +213,6 @@ export class ModulePage {
         this.askBackend();
       }
     });
-
-    if (this.isDirectory()) {
-      this.fetchDirectory();
-    }
   }
 
   ngOnInit(): void {

@@ -367,6 +367,9 @@
               <div class="prof-details">
                 <h3>{{ prof.nombre }}</h3>
                 <p>{{ prof.titulos }}</p>
+                @if (prof.email) {
+                  <p>{{ prof.email }}</p>
+                }
               </div>
             </div>
           } @empty {
