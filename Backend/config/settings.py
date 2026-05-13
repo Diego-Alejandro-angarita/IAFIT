@@ -19,7 +19,7 @@ ALLOWED_HOSTS = [
     "vigilant-space-meme-5g4p655xq7g9h4qx6-8000.app.github.dev",
     "vigilant-space-meme-5g4p655xq7g9h4qx6-4200.app.github.dev",
     "107.20.54.80",
-    "18.232.110.128",
+    "98.87.148.20",
 ]
 
 
