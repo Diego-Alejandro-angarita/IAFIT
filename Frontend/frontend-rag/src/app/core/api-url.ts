@@ -1,21 +1,9 @@
-const LOCAL_API_PORT = '8001';
 const REMOTE_API_PORT = '8001';
-const REMOTE_API_HOST = '107.20.54.80';
-
-function isLocalFrontend(): boolean {
-  if (typeof globalThis.location === 'undefined') {
-    return false;
-  }
-
-  return ['localhost', '127.0.0.1'].includes(globalThis.location.hostname);
-}
+const REMOTE_API_HOST = '100.31.58.141';
+const API_BASE_URL = `http://${REMOTE_API_HOST}:${REMOTE_API_PORT}/api`;
 
 export function getApiBaseUrl(): string {
-  if (isLocalFrontend()) {
-    return `http://localhost:${LOCAL_API_PORT}/api`;
-  }
-
-  return `http://${REMOTE_API_HOST}:${REMOTE_API_PORT}/api`;
+  return API_BASE_URL;
 }
 
 export function apiUrl(path: string): string {

@@ -19,6 +19,7 @@ ALLOWED_HOSTS = [
     "vigilant-space-meme-5g4p655xq7g9h4qx6-8000.app.github.dev",
     "vigilant-space-meme-5g4p655xq7g9h4qx6-4200.app.github.dev",
     "107.20.54.80",
+    "100.31.58.141",
 ]
 
 
@@ -58,6 +59,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://107.20.54.80",
     "http://107.20.54.80:4000",
     "http://107.20.54.80:4200",
+    "http://100.31.58.141",
+    "http://100.31.58.141:4000",
+    "http://100.31.58.141:4200",
 ]
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
