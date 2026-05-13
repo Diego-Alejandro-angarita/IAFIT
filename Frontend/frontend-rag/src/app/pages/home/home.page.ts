@@ -39,7 +39,7 @@ export class HomePage implements OnInit {
 
   protected readonly newFeatures: ActionItem[] = [
     { id: 'calendar',  title: 'Calendario Académico', colorClass: 'indigo' },
-    { id: 'directory', title: 'Directorio',           colorClass: 'teal'   },
+    { id: 'directory', title: 'Lis. profesores',      colorClass: 'teal'   },
     { id: 'seedbeds',  title: 'Grupos y Semilleros',  colorClass: 'pink'   },
   ];
 
