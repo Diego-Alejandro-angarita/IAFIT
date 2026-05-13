@@ -6,3 +6,8 @@ logs
 
 dist/
 node_modules/
+
+.venv/
+venv/
+Backend/venv/
+Backend/Test/
